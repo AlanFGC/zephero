@@ -1,0 +1,52 @@
+#binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
+
+# Go workspace file
+go.work
+go.work.sum
+
+# env file
+.env
+
+# Ignore SQLite database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Ignore log files
+*.log
+
+# Ignore Docker files
+docker-compose.override.yml
+docker-compose.override.yaml
+
+# Ignore DBeaver settings
+.dbeaver/
+
+# Ignore macOS system files
+.DS_Store
+
+# Ignore node_modules/ if using Node.js
+node_modules/
+
+# Ignore Python virtual environments
+venv/
+__pycache__/
+*.pyc
+
+# Ignore IDE settings
+.vscode/
+.idea/
