@@ -1,4 +1,4 @@
 #!/bin/bash
 
-chmod +x build.sh run.sh create_sample_db.sh
+chmod +x build.sh run.sh make_db.sh
 

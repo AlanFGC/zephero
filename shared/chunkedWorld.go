@@ -1,7 +1,8 @@
 package shared
 
 import (
-	"database/sql"
+	"bytes"
+	"encoding/gob"
 	"errors"
 	"fmt"
 	"math"
@@ -59,7 +60,6 @@ func newChunk(chunkLen int) [][]Node {
 	for i := 0; i < chunkLen; i++ {
 		c[i] = make([]Node, chunkLen)
 	}
-
 	return c
 }
 
@@ -99,29 +99,40 @@ func (w *chunkedWorld) GetSize() (int, int) {
 }
 
 func (w *chunkedWorld) getEntityView(row int, col int) {
-
 }
 
-func (w *chunkedWorld) loadWorld(url string) {
+func (w *chunkedWorld) loadWorld(url string) {}
 
+func serializeChunk(chunk *WorldChunk) ([]byte, error) {
+	data := &chunk.data
+	var buffer bytes.Buffer
+	encoder := gob.NewEncoder(&buffer)
+	if err := encoder.Encode(data); err != nil {
+		return nil, err
+	}
+	return buffer.Bytes(), nil
 }
 
-func saveWorldChunks(db *sql.DB, world chunkedWorld) error {
-	// Assuming the table and database connection are correctly set up
-	for i := 0; i < world.rows; i++ {
-		for j := 0; j < world.cols; j++ {
-			chunk := world.world[i][j]
-			serializedData := serializeChunk(chunk)
-			if err := insertChunk(db, chunk.chunkId, i, j, serializedData); err != nil {
-				return fmt.Errorf("error saving chunk at (%d, %d): %v", i, j, err)
+func deserializeChunk(data []byte) ([][]WorldChunk, error) {
+	var chunk [][]WorldChunk
+	buffer := bytes.NewBuffer(data)
+	decoder := gob.NewDecoder(buffer)
+	if err := decoder.Decode(&chunk); err != nil {
+		return nil, err
+	}
+	return chunk, nil
+}
+
+func (w *chunkedWorld) Save(dao *SqliteDAO) error {
+	for i, _ := range w.world {
+		for j, _ := range w.world[i] {
+			chunk := w.world[i][j]
+			byteData, err := serializeChunk(&chunk)
+			if err != nil {
+				return err
 			}
+			dao.SaveWorldChunk(0, i, j, byteData)
 		}
 	}
 	return nil
-}
-
-func insertChunk(db *sql.DB, chunkId, row, col int, data string) error {
-}
-
-func serializeChunk(chunk WorldChunk) string {
 }

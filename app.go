@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
-	table "github.com/olekukonko/tablewriter"
 	"math/rand"
 	"os"
 	"strconv"
 	"sync/atomic"
 	"time"
 	game "zephero/shared"
+
+	table "github.com/olekukonko/tablewriter"
 )
 
 var counter uint64
@@ -20,14 +21,23 @@ func generateTimeBasedID() uint64 {
 }
 
 func main() {
-	rand.Seed(time.Now().UnixNano())
+	dao := game.NewSqliteDAO("world")
+	err := dao.OpenDb("world.db")
+	if err != nil {
+		fmt.Print(err)
+	}
+	rand.New(rand.NewSource(time.Now().UnixNano()))
 	w, err := game.NewChunkedWorld(5, 5, 16)
 	if err != nil {
-		fmt.Print("FAILED TO CREATE:", err)
+		fmt.Print("FAILE	D TO CREATE:", err)
 		return
 	}
 	setRandomUUIDs(w)
 	printWorld(w)
+	err = dao.CloseDb()
+	if err != nil {
+		fmt.Print(err)
+	}
 }
 
 func chance(probability float64) bool {
