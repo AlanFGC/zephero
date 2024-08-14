@@ -10,6 +10,16 @@ type GameWorld struct {
 	cols  int
 }
 
+func (w *GameWorld) Save(dao *SqliteDAO) error {
+	//TODO implement me
+	panic("implement me")
+}
+
+func (w *GameWorld) Load(dao *SqliteDAO) error {
+	//TODO implement me
+	panic("implement me")
+}
+
 func newGameWorld(rows int, cols int) *GameWorld {
 	w := &GameWorld{
 		world: make([][]Node, rows),

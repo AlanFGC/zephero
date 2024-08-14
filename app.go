@@ -27,13 +27,14 @@ func main() {
 		fmt.Print(err)
 	}
 	rand.New(rand.NewSource(time.Now().UnixNano()))
-	w, err := game.NewChunkedWorld(5, 5, 16)
+	w, err := game.NewChunkedWorld(200, 200, 16)
 	if err != nil {
-		fmt.Print("FAILE	D TO CREATE:", err)
+		fmt.Print("FAILED TO CREATE:", err)
 		return
 	}
 	setRandomUUIDs(w)
 	printWorld(w)
+	w.Save(dao)
 	err = dao.CloseDb()
 	if err != nil {
 		fmt.Print(err)
@@ -54,7 +55,7 @@ func printWorld(w game.World) {
 			node, _ := w.GetSpace(i, j)
 			if node != nil {
 				str := strconv.FormatUint(node.GetId(), 10)
-				strMatrix[i][j] = string(str[19])
+				strMatrix[i][j] = string(str[0])
 			} else {
 				strMatrix[i][j] = " "
 			}

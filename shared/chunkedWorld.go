@@ -106,6 +106,7 @@ func (w *chunkedWorld) loadWorld(url string) {}
 func serializeChunk(chunk *WorldChunk) ([]byte, error) {
 	data := &chunk.data
 	var buffer bytes.Buffer
+	gob.Register(GNode{})
 	encoder := gob.NewEncoder(&buffer)
 	if err := encoder.Encode(data); err != nil {
 		return nil, err
@@ -113,14 +114,14 @@ func serializeChunk(chunk *WorldChunk) ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-func deserializeChunk(data []byte) ([][]WorldChunk, error) {
-	var chunk [][]WorldChunk
+func deserializeChunk(data []byte) (*WorldChunk, error) {
+	var chunk WorldChunk
 	buffer := bytes.NewBuffer(data)
 	decoder := gob.NewDecoder(buffer)
 	if err := decoder.Decode(&chunk); err != nil {
 		return nil, err
 	}
-	return chunk, nil
+	return &chunk, nil
 }
 
 func (w *chunkedWorld) Save(dao *SqliteDAO) error {
@@ -129,9 +130,43 @@ func (w *chunkedWorld) Save(dao *SqliteDAO) error {
 			chunk := w.world[i][j]
 			byteData, err := serializeChunk(&chunk)
 			if err != nil {
+				fmt.Println(err)
 				return err
 			}
-			dao.SaveWorldChunk(0, i, j, byteData)
+			err = dao.SaveWorldChunk(0, i, j, byteData, false)
+			if err != nil {
+				fmt.Println(err)
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func (w *chunkedWorld) Load(dao *SqliteDAO) error {
+	if len(w.world) != w.rows {
+		w.world = make([][]WorldChunk, w.rows)
+	}
+
+	for z := 0; z < w.rows; z++ {
+		if len(w.world[z]) != w.cols {
+			w.world[z] = make([]WorldChunk, w.cols)
+		}
+	}
+
+	for i := 0; i < w.rows; i++ {
+		for j := 0; j < w.cols; j++ {
+			data, err := dao.FetchWorldChunk(0, i, j)
+			if err != nil {
+				fmt.Println("err")
+				continue
+			}
+			chunk, err := deserializeChunk(data)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+			w.world[i][j] = *chunk
 		}
 	}
 	return nil

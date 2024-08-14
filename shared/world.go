@@ -10,6 +10,8 @@ type World interface {
 	SetSpace(node Node, row, col int) error
 	GetSpace(row, col int) (Node, error)
 	GetSize() (int, int)
+	Save(*SqliteDAO) error
+	Load(*SqliteDAO) error
 }
 
 func NewSimpleWorld(cols int, rows int) World {

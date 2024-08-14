@@ -29,11 +29,20 @@ func (d *SqliteDAO) OpenDb(dataSourceName string) error {
 	return nil
 }
 
-func (d *SqliteDAO) SaveWorldChunk(worldId int, chunkRow int, chunkCol int, chunk []byte) error {
+func (d *SqliteDAO) SaveWorldChunk(worldId int, chunkRow int, chunkCol int, chunk []byte, lockChunk bool) error {
 	db := d.db
+
 	// SQL statement to insert or update a world chunk
-	query := "INSERT INTO world_chunk (world_id, row_id, col_id, data, last_updated, locked) VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, 0)"
-	_, err := db.Exec(query, worldId, chunkRow, chunkCol, chunk)
+	query := `
+	INSERT INTO world_chunk (world_id, row_id, col_id, data, last_updated, locked) 
+	VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, 0)
+	ON CONFLICT(world_id, row_id, col_id) 
+	DO UPDATE SET 
+		data = excluded.data, 
+		last_updated = CURRENT_TIMESTAMP,
+		locked = excluded.locked`
+
+	_, err := db.Exec(query, worldId, chunkRow, chunkCol, chunk, lockChunk)
 	if err != nil {
 		return fmt.Errorf("failed to save world chunk: %w", err)
 	}
@@ -43,15 +52,19 @@ func (d *SqliteDAO) SaveWorldChunk(worldId int, chunkRow int, chunkCol int, chun
 
 func (d *SqliteDAO) FetchWorldChunk(worldId int, chunkRow int, chunkCol int) ([]byte, error) {
 	db := d.db
-	query := "SELECT data FROM world_chunk WHERE world_id = ? AND row_id = ? AND col_id = ? AND locked != 1"
+	var locked bool
+	query := "SELECT data, locked FROM world_chunk WHERE world_id = ? AND row_id = ? AND col_id = ?"
 	var chunk []byte
-	err := db.QueryRow(query, worldId, chunkRow, chunkCol)
+	err := db.QueryRow(query, worldId, chunkRow, chunkCol).Scan(&chunk, &locked)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch world chunk: %w", err)
+		return nil, err
 	}
 
-	// Return the retrieved chunk
-	return chunk, nil
+	if locked {
+		err = fmt.Errorf("fetched row is already claimed")
+	}
+
+	return chunk, err
 }
 
 func (d *SqliteDAO) CloseDb() error {
