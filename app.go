@@ -26,19 +26,12 @@ func main() {
 	if err != nil {
 		fmt.Print(err)
 	}
-	rand.New(rand.NewSource(time.Now().UnixNano()))
 	w, err := game.NewChunkedWorld(200, 200, 16)
 	if err != nil {
 		fmt.Print("FAILED TO CREATE:", err)
 		return
 	}
-	setRandomUUIDs(w)
-	printWorld(w)
-	w.Save(dao)
-	err = dao.CloseDb()
-	if err != nil {
-		fmt.Print(err)
-	}
+	w.Load(dao)
 }
 
 func chance(probability float64) bool {

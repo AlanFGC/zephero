@@ -99,9 +99,14 @@ func (w *chunkedWorld) GetSize() (int, int) {
 }
 
 func (w *chunkedWorld) getEntityView(row int, col int) {
+	panic("Not implemented")
+	return
 }
 
-func (w *chunkedWorld) loadWorld(url string) {}
+func (w *chunkedWorld) loadWorld(url string) {
+	panic("Not implemented")
+	return
+}
 
 func serializeChunk(chunk *WorldChunk) ([]byte, error) {
 	data := &chunk.data
@@ -114,14 +119,15 @@ func serializeChunk(chunk *WorldChunk) ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-func deserializeChunk(data []byte) (*WorldChunk, error) {
-	var chunk WorldChunk
+func deserializeChunk(data []byte) ([][]GNode, error) {
+	var chunk [][]GNode
 	buffer := bytes.NewBuffer(data)
+	gob.Register(GNode{})
 	decoder := gob.NewDecoder(buffer)
-	if err := decoder.Decode(&chunk); err != nil {
+	if err := decoder.Decode(chunk); err != nil {
 		return nil, err
 	}
-	return &chunk, nil
+	return chunk, nil
 }
 
 func (w *chunkedWorld) Save(dao *SqliteDAO) error {
@@ -161,12 +167,12 @@ func (w *chunkedWorld) Load(dao *SqliteDAO) error {
 				fmt.Println("err")
 				continue
 			}
-			chunk, err := deserializeChunk(data)
+			matrix, err := deserializeChunk(data)
 			if err != nil {
 				fmt.Println(err)
 				continue
 			}
-			w.world[i][j] = *chunk
+			w.world[i][j] = { data: matrix}
 		}
 	}
 	return nil

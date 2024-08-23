@@ -9,3 +9,12 @@ CREATE TABLE world_chunk (
   data chunk NOT NULL,
   PRIMARY KEY (world_id, row_id, col_id)
 );
+
+
+CREATE TABLE world (
+  world_id INTEGER PRIMARY KEY AUTOINCREMENT,
+  created DATETIME DEFAULT CURRENT_TIMESTAMP,
+  num_rows INTEGER,
+  num_cols INTEGER,
+  chunkLen INTEGER
+)
