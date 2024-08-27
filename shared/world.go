@@ -1,21 +1,11 @@
 package shared
 
-type Node interface {
-	SetId(id uint64)
-	GetId() uint64
-	GetChild() Node
-}
-
 type World interface {
-	SetSpace(node Node, row, col int) error
+	SetSpace(id uint64, child uint64s, row, col int) error
 	GetSpace(row, col int) (Node, error)
 	GetSize() (int, int)
 	Save(*SqliteDAO) error
 	Load(*SqliteDAO) error
-}
-
-func NewSimpleWorld(cols int, rows int) World {
-	return newGameWorld(cols, rows)
 }
 
 func NewChunkedWorld(chunkLenVertical int, chunkLenHorizontal int, chunkSideLen int) (World, error) {
