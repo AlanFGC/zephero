@@ -13,7 +13,7 @@ type WorldChunk struct {
 	data    [][]GNode
 }
 
-type chunkedWorld struct {
+type ChunkedWorld struct {
 	world     [][]WorldChunk
 	rows      int
 	cols      int
@@ -21,7 +21,7 @@ type chunkedWorld struct {
 	chunkLen  int
 }
 
-func newChunkedWorld(chunkLenV int, chunkLenH int, chunkLen int) (*chunkedWorld, error) {
+func newChunkedWorld(chunkLenV int, chunkLenH int, chunkLen int) (*ChunkedWorld, error) {
 	chunkSize := int(math.Pow(float64(chunkLen), 2))
 	fmt.Println("chunksize: ", chunkSize)
 
@@ -29,7 +29,7 @@ func newChunkedWorld(chunkLenV int, chunkLenH int, chunkLen int) (*chunkedWorld,
 		return nil, errors.New("chunk size needs to be a multiple of 4")
 	}
 
-	w := chunkedWorld{
+	w := ChunkedWorld{
 		world:     make([][]WorldChunk, chunkLenV),
 		rows:      chunkLenV,
 		cols:      chunkLenH,
@@ -63,7 +63,7 @@ func newChunk(chunkLen int) [][]GNode {
 	return c
 }
 
-func (w *chunkedWorld) SetSpace(id uint64, child uint64, row int, col int) error {
+func (w *ChunkedWorld) SetSpace(id uint64, child uint64, row int, col int) error {
 	if row < 0 || col < 0 {
 		return errors.New("invalid coordinate")
 	}
@@ -71,29 +71,80 @@ func (w *chunkedWorld) SetSpace(id uint64, child uint64, row int, col int) error
 	chunkIndexCol := col / w.chunkLen
 	chunk := w.world[chunkIndexRow][chunkIndexCol]
 	chunk.data[row%w.chunkLen][col%w.chunkLen] = GNode{
-		Id    uint64
-		Child uint64
+		Id:  id,
+		Child: child,
 	}
 	return nil
 }
 
-func (w *chunkedWorld) GetSpace(row int, col int) (Node, error) {
+func (w *ChunkedWorld) GetSpace(row int, col int) (Node, error) {
 	if row < 0 || col < 0 {
 		return nil, errors.New("invalid coordinate")
 	}
 	chunkIndexRow := row / w.chunkLen
 	chunkIndexCol := col / w.chunkLen
 	chunk := w.world[chunkIndexRow][chunkIndexCol]
-	return chunk.data[row%w.chunkLen][col%w.chunkLen], nil
+	node := chunk.data[row%w.chunkLen][col%w.chunkLen]
+	return  &node, nil
 }
 
-func (w *chunkedWorld) GetSize() (int, int) {
+func (w *ChunkedWorld) GetSize() (int, int) {
 	return w.rows * w.chunkLen, w.cols * w.chunkLen
+}
+
+
+func (w *ChunkedWorld) Save(dao *SqliteDAO) error {
+	for i, _ := range w.world {
+		for j, _ := range w.world[i] {
+			chunk := w.world[i][j]
+			byteData, err := serializeChunk(&chunk)
+			if err != nil {
+				fmt.Println(err)
+				return err
+			}
+			err = dao.SaveWorldChunk(0, i, j, byteData, false)
+			if err != nil {
+				fmt.Println(err)
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+
+func (w *ChunkedWorld) Load(dao *SqliteDAO) error {
+	if len(w.world) != w.rows {
+		w.world = make([][]WorldChunk, w.rows)
+	}
+
+	for z := 0; z < w.rows; z++ {
+		if len(w.world[z]) != w.cols {
+			w.world[z] = make([]WorldChunk, w.cols)
+		}
+	}
+
+	for i := 0; i < w.rows; i++ {
+		for j := 0; j < w.cols; j++ {
+			data, err := dao.FetchWorldChunk(0, i, j)
+			if err != nil {
+				fmt.Println("err")
+				continue
+			}
+			matrix, err := deserializeChunk(data)
+			if err != nil {
+				fmt.Println(err)
+				continue
+			}
+			w.world[i][j].data = matrix
+		}
+	}
+	return nil
 }
 
 // private functions
 
-func (w *chunkedWorld) getChunkFromRowCol(row int, col int) (*WorldChunk, error) {
+func (w *ChunkedWorld) getChunkFromRowCol(row int, col int) (*WorldChunk, error) {
 	if row < 0 || col < 0 {
 		return nil, errors.New("invalid coordinate")
 	}
@@ -104,12 +155,12 @@ func (w *chunkedWorld) getChunkFromRowCol(row int, col int) (*WorldChunk, error)
 }
 
 
-func (w *chunkedWorld) getEntityView(row int, col int) {
+func (w *ChunkedWorld) getEntityView(row int, col int) {
 	panic("Not implemented")
 	return
 }
 
-func (w *chunkedWorld) loadWorld(url string) {
+func (w *ChunkedWorld) loadWorld(url string) {
 	panic("Not implemented")
 	return
 }

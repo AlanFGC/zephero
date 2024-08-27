@@ -3,7 +3,7 @@ package shared
 type Node interface {
 	SetId(id uint64)
 	GetId() uint64
-	setChild(id uint64)
+	SetChild(id uint64)
 	GetChild() uint64
 }
 
@@ -31,6 +31,6 @@ func (n *GNode) GetChild() uint64 {
 	return n.Child
 }
 
-func (n *GNode) setChild(id uint64) {
+func (n *GNode) SetChild(id uint64) {
 	n.Child = id
 }

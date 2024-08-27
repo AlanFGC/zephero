@@ -1,4 +1,13 @@
-package main
+package utils
+
+import (
+	"math/rand"
+	"os"
+	"strconv"
+	"time"
+	game "zephero/shared"
+	table "github.com/olekukonko/tablewriter"
+)
 
 func PrintWorld(w game.World) {
 	rows, cols := w.GetSize()
@@ -22,12 +31,12 @@ func PrintWorld(w game.World) {
 	t.Render()
 }
 
-func generateTimeBasedID() uint64 {
-	timestamp := uint64(time.Now().UnixNano())
-	counterValue := atomic.AddUint64(&counter, 1)
-	return (timestamp << 16) | (counterValue & 0xFFFF)
+func GenerateTimeBasedID() uint64 {
+	now := time.Now()
+	millis := now.UnixNano() / int64(time.Millisecond)
+	return uint64(millis)
 }
 
-func chance(probability float64) bool {
+func Chance(probability float64) bool {
 	return rand.Float64() < probability
 }

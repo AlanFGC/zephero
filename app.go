@@ -2,14 +2,7 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
-	"os"
-	"strconv"
-	"sync/atomic"
-	"time"
 	game "zephero/shared"
-
-	table "github.com/olekukonko/tablewriter"
 )
 
 var counter uint64
