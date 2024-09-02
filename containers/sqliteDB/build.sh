@@ -1,4 +1,4 @@
 #!/bin/bash
 
-echo "Building Docker image..."
+echo "WARNING: NO NEED TO USE DOCKER FOR THIS"
 docker build -t alpine-sqlite .

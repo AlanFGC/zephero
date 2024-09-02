@@ -5,8 +5,6 @@ import (
 	game "zephero/shared"
 )
 
-var counter uint64
-
 func main() {
 	dao := game.NewSqliteDAO("world")
 	err := dao.OpenDb("world.db")

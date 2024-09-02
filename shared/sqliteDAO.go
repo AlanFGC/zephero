@@ -3,6 +3,7 @@ package shared
 import (
 	"database/sql"
 	"fmt"
+
 	_ "github.com/mattn/go-sqlite3" // SQLite driver
 )
 
@@ -27,6 +28,21 @@ func (d *SqliteDAO) OpenDb(dataSourceName string) error {
 		return err
 	}
 	return nil
+}
+
+func (d *SqliteDAO) addToWorldTable(id int, rows int, cols int, chunkLen int) (int64, error) {
+	db := d.db
+
+	query := `
+	INSERT INTO world (date_created, rows, columns, chunk_length)
+	VALUES (CURRENT_TIMESTAMP, ?, ?, ?)
+	`
+
+	result, err := db.Exec(query, id, rows, cols, chunkLen)
+	if err != nil {
+		return 0, err
+	}
+	return result.LastInsertId()
 }
 
 func (d *SqliteDAO) SaveWorldChunk(worldId int, chunkRow int, chunkCol int, chunk []byte, lockChunk bool) error {

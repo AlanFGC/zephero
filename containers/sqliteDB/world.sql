@@ -13,8 +13,8 @@ CREATE TABLE world_chunk (
 
 CREATE TABLE world (
   world_id INTEGER PRIMARY KEY AUTOINCREMENT,
-  created DATETIME DEFAULT CURRENT_TIMESTAMP,
-  num_rows INTEGER,
-  num_cols INTEGER,
-  chunkLen INTEGER
+  date_created DATETIME DEFAULT CURRENT_TIMESTAMP,
+  rows INTEGER,
+  columns INTEGER,
+  chunk_length INTEGER
 )
