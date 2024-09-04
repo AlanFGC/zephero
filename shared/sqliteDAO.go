@@ -30,15 +30,12 @@ func (d *SqliteDAO) OpenDb(dataSourceName string) error {
 	return nil
 }
 
-func (d *SqliteDAO) addToWorldTable(id int, rows int, cols int, chunkLen int) (int64, error) {
+func (d *SqliteDAO) InsertNewWorld(rows int, cols int, chunkLen int) (int64, error) {
 	db := d.db
 
-	query := `
-	INSERT INTO world (date_created, rows, columns, chunk_length)
-	VALUES (CURRENT_TIMESTAMP, ?, ?, ?)
-	`
+	query := `INSERT INTO world ("date_created", "rows", "columns", "chunk_length") VALUES (CURRENT_TIMESTAMP, ?, ?, ?)`
 
-	result, err := db.Exec(query, id, rows, cols, chunkLen)
+	result, err := db.Exec(query, rows, cols, chunkLen)
 	if err != nil {
 		return 0, err
 	}

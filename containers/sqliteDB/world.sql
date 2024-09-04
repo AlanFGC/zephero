@@ -1,4 +1,6 @@
 DROP TABLE IF EXISTS world_chunks;
+DROP TABLE IF EXISTS world;
+
 
 CREATE TABLE world_chunk (
   world_id INTEGER,
