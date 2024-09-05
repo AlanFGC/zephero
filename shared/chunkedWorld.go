@@ -14,6 +14,7 @@ type WorldChunk struct {
 }
 
 type ChunkedWorld struct {
+	id        int
 	world     [][]WorldChunk
 	rows      int
 	cols      int
@@ -45,7 +46,7 @@ func newChunkedWorld(chunkLenV int, chunkLenH int, chunkLen int) (*ChunkedWorld,
 		for colIndex := range rowChunk {
 			w.world[rowIndex][colIndex] = WorldChunk{
 				chunkId: rowIndex*chunkLen + colIndex,
-				data:    newChunk(chunkLen),
+				data:    newChunkData(chunkLen),
 			}
 		}
 	}
@@ -55,7 +56,7 @@ func newChunkedWorld(chunkLenV int, chunkLenH int, chunkLen int) (*ChunkedWorld,
 	return &w, nil
 }
 
-func newChunk(chunkLen int) [][]GNode {
+func newChunkData(chunkLen int) [][]GNode {
 	c := make([][]GNode, chunkLen)
 	for i := 0; i < chunkLen; i++ {
 		c[i] = make([]GNode, chunkLen)
@@ -71,8 +72,8 @@ func (w *ChunkedWorld) SetSpace(id uint64, child uint64, row int, col int) error
 	chunkIndexCol := col / w.chunkLen
 	chunk := w.world[chunkIndexRow][chunkIndexCol]
 	chunk.data[row%w.chunkLen][col%w.chunkLen] = GNode{
-		Id:    id,
-		Child: child,
+		EntityID:  id,
+		TerrainID: child,
 	}
 	return nil
 }
@@ -93,15 +94,18 @@ func (w *ChunkedWorld) GetSize() (int, int) {
 }
 
 func (w *ChunkedWorld) Save(dao *SqliteDAO) error {
-	for i, _ := range w.world {
-		for j, _ := range w.world[i] {
+	if dao == nil {
+		return errors.New("dao is nil")
+	}
+	for i := range w.world {
+		for j := range w.world[i] {
 			chunk := w.world[i][j]
 			byteData, err := SerializeChunkData(&chunk)
 			if err != nil {
 				fmt.Println(err)
 				return err
 			}
-			err = dao.SaveWorldChunk(0, i, j, byteData, false)
+			err = dao.SaveWorldChunk(w.id, i, j, byteData, false)
 			if err != nil {
 				fmt.Println(err)
 				return err
@@ -112,6 +116,9 @@ func (w *ChunkedWorld) Save(dao *SqliteDAO) error {
 }
 
 func (w *ChunkedWorld) Load(dao *SqliteDAO) error {
+	if dao == nil {
+		return errors.New("dao is nil")
+	}
 	if len(w.world) != w.rows {
 		w.world = make([][]WorldChunk, w.rows)
 	}
@@ -124,7 +131,7 @@ func (w *ChunkedWorld) Load(dao *SqliteDAO) error {
 
 	for i := 0; i < w.rows; i++ {
 		for j := 0; j < w.cols; j++ {
-			data, err := dao.FetchWorldChunk(0, i, j)
+			data, err := dao.FetchWorldChunk(w.id, i, j)
 			if err != nil {
 				fmt.Println("err")
 				continue
@@ -134,32 +141,11 @@ func (w *ChunkedWorld) Load(dao *SqliteDAO) error {
 				fmt.Println(err)
 				continue
 			}
+			w.world[i][j].chunkId = i*w.chunkLen + j
 			w.world[i][j].data = matrix
 		}
 	}
 	return nil
-}
-
-// private functions
-
-func (w *ChunkedWorld) getChunkFromRowCol(row int, col int) (*WorldChunk, error) {
-	if row < 0 || col < 0 {
-		return nil, errors.New("invalid coordinate")
-	}
-	chunkIndexRow := row / w.chunkLen
-	chunkIndexCol := col / w.chunkLen
-	chunk := w.world[chunkIndexRow][chunkIndexCol]
-	return &chunk, nil
-}
-
-func (w *ChunkedWorld) getEntityView(row int, col int) {
-	panic("Not implemented")
-	return
-}
-
-func (w *ChunkedWorld) loadWorld(url string) {
-	panic("Not implemented")
-	return
 }
 
 func SerializeChunkData(chunk *WorldChunk) ([]byte, error) {
@@ -182,4 +168,15 @@ func DeserializeChunkData(data []byte) ([][]GNode, error) {
 		return nil, err
 	}
 	return chunk, nil
+}
+
+// private functions
+func (w *ChunkedWorld) getChunkFromRowCol(row int, col int) (*WorldChunk, error) {
+	if row < 0 || col < 0 {
+		return nil, errors.New("invalid coordinate")
+	}
+	chunkIndexRow := row / w.chunkLen
+	chunkIndexCol := col / w.chunkLen
+	chunk := w.world[chunkIndexRow][chunkIndexCol]
+	return &chunk, nil
 }

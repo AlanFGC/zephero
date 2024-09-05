@@ -22,28 +22,35 @@ func main() {
 	dao := world.NewSqliteDAO("world")
 	err := dao.OpenDb("world.db")
 	if err != nil {
-		errors.New("Failed to open DB")
+		_ = errors.New("failed to open DB")
 		return
 	}
 	id, err := dao.InsertNewWorld(rows, cols, chunkLen)
 	fmt.Println("new world ID: ", id)
 	if err != nil {
-		errors.New("Failed to insert new world")
+		_ = errors.New("failed to insert new world")
 	}
 	err = os.Setenv(WORLD_ID_ENV, strconv.FormatInt(id, 10))
 	if err != nil {
-		log.Fatal("Failed to set environment variable")
+		log.Fatal("Failed to set environment variable.")
 	} else {
 		fmt.Println("WORLD_ID set to " + os.Getenv(WORLD_ID_ENV))
 	}
 	w, err := world.NewChunkedWorld(rows, cols, chunkLen)
-	if err != nil {
-		errors.New("Failed to create new world")
+	if err != nil || w == nil {
+		_ = errors.New("failed to create new world")
 	}
 	setRandomUUIDs(w)
-	w.Save(dao)
+	err = w.Save(dao)
+	if err != nil {
+		_ = errors.New("failed to save world")
+	}
 	fmt.Println("World was created successfully")
-	dao.CloseDb()
+	err = dao.CloseDb()
+	if err != nil {
+		_ = errors.New("failed to gracefully close DB")
+		return
+	}
 }
 
 func setRandomUUIDs(w world.World) {
@@ -52,7 +59,10 @@ func setRandomUUIDs(w world.World) {
 		for j := 0; j < cols; j++ {
 			if utils.Chance(0.30) {
 				id := utils.GenerateTimeBasedID()
-				w.SetSpace(id, 0, i, j)
+				err := w.SetSpace(id, 0, i, j)
+				if err != nil {
+					_ = errors.New("failed to set random ids")
+				}
 			}
 		}
 	}

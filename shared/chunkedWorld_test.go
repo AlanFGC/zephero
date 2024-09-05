@@ -12,7 +12,7 @@ func makeOrderedChunk() *WorldChunk {
 
 	for i := range arr {
 		for j := range arr[i] {
-			arr[i][j] = GNode{Id: uint64(i*len(arr) + j)}
+			arr[i][j] = GNode{EntityID: uint64(i*len(arr) + j)}
 		}
 	}
 
@@ -46,7 +46,7 @@ func TestDeserializeChunk(t *testing.T) {
 	}
 }
 
-func TestCodeDecodeData(t *testing.T) {
+func TestEncodeDecodeData(t *testing.T) {
 	chunk := makeOrderedChunk()
 	serializedChunk, err := SerializeChunkData(chunk)
 	if err != nil || serializedChunk == nil {
