@@ -71,7 +71,7 @@ func (w *ChunkedWorld) SetSpace(id uint64, child uint64, row int, col int) error
 	chunkIndexCol := col / w.chunkLen
 	chunk := w.world[chunkIndexRow][chunkIndexCol]
 	chunk.data[row%w.chunkLen][col%w.chunkLen] = GNode{
-		Id:  id,
+		Id:    id,
 		Child: child,
 	}
 	return nil
@@ -85,19 +85,18 @@ func (w *ChunkedWorld) GetSpace(row int, col int) (Node, error) {
 	chunkIndexCol := col / w.chunkLen
 	chunk := w.world[chunkIndexRow][chunkIndexCol]
 	node := chunk.data[row%w.chunkLen][col%w.chunkLen]
-	return  &node, nil
+	return &node, nil
 }
 
 func (w *ChunkedWorld) GetSize() (int, int) {
 	return w.rows * w.chunkLen, w.cols * w.chunkLen
 }
 
-
 func (w *ChunkedWorld) Save(dao *SqliteDAO) error {
 	for i, _ := range w.world {
 		for j, _ := range w.world[i] {
 			chunk := w.world[i][j]
-			byteData, err := serializeChunk(&chunk)
+			byteData, err := SerializeChunkData(&chunk)
 			if err != nil {
 				fmt.Println(err)
 				return err
@@ -111,7 +110,6 @@ func (w *ChunkedWorld) Save(dao *SqliteDAO) error {
 	}
 	return nil
 }
-
 
 func (w *ChunkedWorld) Load(dao *SqliteDAO) error {
 	if len(w.world) != w.rows {
@@ -131,7 +129,7 @@ func (w *ChunkedWorld) Load(dao *SqliteDAO) error {
 				fmt.Println("err")
 				continue
 			}
-			matrix, err := deserializeChunk(data)
+			matrix, err := DeserializeChunkData(data)
 			if err != nil {
 				fmt.Println(err)
 				continue
@@ -154,7 +152,6 @@ func (w *ChunkedWorld) getChunkFromRowCol(row int, col int) (*WorldChunk, error)
 	return &chunk, nil
 }
 
-
 func (w *ChunkedWorld) getEntityView(row int, col int) {
 	panic("Not implemented")
 	return
@@ -165,7 +162,7 @@ func (w *ChunkedWorld) loadWorld(url string) {
 	return
 }
 
-func serializeChunk(chunk *WorldChunk) ([]byte, error) {
+func SerializeChunkData(chunk *WorldChunk) ([]byte, error) {
 	data := &chunk.data
 	var buffer bytes.Buffer
 	gob.Register(GNode{})
@@ -176,12 +173,12 @@ func serializeChunk(chunk *WorldChunk) ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
-func deserializeChunk(data []byte) ([][]GNode, error) {
+func DeserializeChunkData(data []byte) ([][]GNode, error) {
 	var chunk [][]GNode
 	buffer := bytes.NewBuffer(data)
 	gob.Register(GNode{})
 	decoder := gob.NewDecoder(buffer)
-	if err := decoder.Decode(chunk); err != nil {
+	if err := decoder.Decode(&chunk); err != nil {
 		return nil, err
 	}
 	return chunk, nil
