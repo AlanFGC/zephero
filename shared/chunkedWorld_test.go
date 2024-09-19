@@ -69,3 +69,23 @@ func TestEncodeDecodeData(t *testing.T) {
 		}
 	}
 }
+
+func TestChunkedWorld_GetPlayerViewByCellCoordinate(t *testing.T) {
+	world, err := newChunkedWorld(10, 10, 16)
+	if err != nil {
+		t.Error(err)
+	}
+
+	view, err := world.GetPlayerViewByCellCoordinate(511, 511)
+	if err != nil {
+		t.Error(err)
+	}
+	if len(view) != 9 {
+		t.Error("Expected chunk array of size 9, got", len(view))
+	}
+	for i := 0; i < len(view); i++ {
+		if view[i].chunkId < 0 {
+			t.Error("Expected chunk at index", i, view[i].chunkId)
+		}
+	}
+}

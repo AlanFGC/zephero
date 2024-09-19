@@ -32,8 +32,8 @@ func newChunkedWorld(chunkLenV int, chunkLenH int, chunkLen int) (*ChunkedWorld,
 
 	w := ChunkedWorld{
 		world:     make([][]WorldChunk, chunkLenV),
-		rows:      chunkLenV,
-		cols:      chunkLenH,
+		rows:      chunkLenV * chunkSize,
+		cols:      chunkLenH * chunkSize,
 		chunkSize: chunkSize,
 		chunkLen:  chunkLen,
 	}
@@ -41,13 +41,14 @@ func newChunkedWorld(chunkLenV int, chunkLenH int, chunkLen int) (*ChunkedWorld,
 	for i := 0; i < chunkLenV; i++ {
 		w.world[i] = make([]WorldChunk, chunkLenH)
 	}
-
+	var idx = 0
 	for rowIndex, rowChunk := range w.world {
 		for colIndex := range rowChunk {
 			w.world[rowIndex][colIndex] = WorldChunk{
-				chunkId: rowIndex*chunkLen + colIndex,
+				chunkId: idx,
 				data:    newChunkData(chunkLen),
 			}
+			idx += 1
 		}
 	}
 	chunksCreated := len(w.world) * len(w.world[0])
@@ -93,7 +94,7 @@ func (w *ChunkedWorld) GetSize() (int, int) {
 	return w.rows * w.chunkLen, w.cols * w.chunkLen
 }
 
-func (w *ChunkedWorld) Save(dao *SqliteDAO) error {
+func (w *ChunkedWorld) SaveWorld(dao *SqliteDAO) error {
 	if dao == nil {
 		return errors.New("dao is nil")
 	}
@@ -115,7 +116,7 @@ func (w *ChunkedWorld) Save(dao *SqliteDAO) error {
 	return nil
 }
 
-func (w *ChunkedWorld) Load(dao *SqliteDAO) error {
+func (w *ChunkedWorld) LoadWorld(dao *SqliteDAO) error {
 	if dao == nil {
 		return errors.New("dao is nil")
 	}
@@ -170,13 +171,80 @@ func DeserializeChunkData(data []byte) ([][]GNode, error) {
 	return chunk, nil
 }
 
+func (w *ChunkedWorld) GetPlayerViewByCellCoordinate(row int, col int) ([]WorldChunk, error) {
+	err := w.checkCellCoordinate(row, col)
+	chunks := make([]WorldChunk, 9)
+	if err != nil {
+		return chunks, err
+	}
+
+	numbChunkV := w.rows / w.chunkLen
+	numbChunkH := w.cols / w.chunkLen
+	startV := numbChunkV/(row/w.chunkLen) - 1
+	startH := numbChunkH/(col/w.chunkLen) - 1
+	fmt.Println("rows:cols", w.rows, w.cols)
+	fmt.Println("startV:", startV, "startH:", startH, "chunklen", w.chunkLen)
+	idx := 0
+	for i := startV; i < startV+3; i++ {
+		for j := startH; j < startH+3; j++ {
+			if i < 0 || j < 0 {
+				// chunkId -5 mean out of bounds
+				chunks[idx] = WorldChunk{chunkId: -5}
+				continue
+			}
+			chunk, err := w.getChunkByChunkCoordinate(i, j)
+			if err != nil {
+				fmt.Println(fmt.Sprintf("err: %v", err))
+				return nil, err
+			} else {
+				fmt.Println(fmt.Sprintf("chunk %v", chunk.chunkId))
+			}
+			chunks[idx] = chunk
+		}
+		idx += 1
+	}
+	return chunks, nil
+}
+
 // private functions
-func (w *ChunkedWorld) getChunkFromRowCol(row int, col int) (*WorldChunk, error) {
-	if row < 0 || col < 0 {
-		return nil, errors.New("invalid coordinate")
+func (w *ChunkedWorld) getChunkByCellCoordinate(row int, col int) (*WorldChunk, error) {
+	err := w.checkCellCoordinate(row, col)
+	if err != nil {
+		return nil, err
 	}
 	chunkIndexRow := row / w.chunkLen
 	chunkIndexCol := col / w.chunkLen
 	chunk := w.world[chunkIndexRow][chunkIndexCol]
 	return &chunk, nil
+}
+
+// Returns the current chunk based on the row and column of world chunk not to be confused with cell coordinates.
+func (w *ChunkedWorld) getChunkByChunkCoordinate(row int, col int) (WorldChunk, error) {
+	err := w.checkChunkCoordinate(row, col)
+	if err != nil {
+		return WorldChunk{}, err
+	}
+	return w.world[row][col], nil
+}
+
+// returns an error if row and col are out of bounds
+func (w *ChunkedWorld) checkCellCoordinate(row int, col int) error {
+	if row < 0 || row > w.rows || col < 0 || col > w.cols {
+		return errors.New(fmt.Sprintf("Invalid coordinate: %d:%d", row, col))
+	}
+	return nil
+}
+
+func (w *ChunkedWorld) checkChunkCoordinate(row, col int) error {
+	chunkLenV := w.rows / w.chunkLen
+	chunkLenH := w.cols / w.chunkLen
+	if row < 0 || row > chunkLenV || col < 0 || col > chunkLenH {
+		return fmt.Errorf(
+			"coordinates out of bounds: row=%d, col=%d (valid row: 0-%d, valid col: 0-%d)",
+			row,
+			col,
+			chunkLenV,
+			chunkLenH)
+	}
+	return nil
 }

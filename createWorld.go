@@ -41,7 +41,12 @@ func main() {
 		_ = errors.New("failed to create new world")
 	}
 	setRandomUUIDs(w)
-	err = w.Save(dao)
+	if w != nil {
+		err = w.SaveWorld(dao)
+	} else {
+		_ = errors.New("null reference to world")
+	}
+
 	if err != nil {
 		_ = errors.New("failed to save world")
 	}
