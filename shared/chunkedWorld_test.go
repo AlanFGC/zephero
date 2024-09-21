@@ -70,6 +70,46 @@ func TestEncodeDecodeData(t *testing.T) {
 	}
 }
 
+func Test_getSpace(t *testing.T) {
+	const chunkLen = 12
+	const chunkLenV = 10
+	const chunkLenH = 11
+	world, err := newChunkedWorld(chunkLenV, chunkLenH, chunkLen)
+	if err != nil {
+		t.Error(err)
+	}
+
+	for i := 0; i < chunkLenV*chunkLen; i++ {
+		for j := 0; j < chunkLenH*chunkLen; j++ {
+			node, err := world.GetSpace(i, j)
+			if err != nil {
+				t.Error(err)
+			}
+			if node == nil {
+				t.Error("Node is nil")
+			}
+		}
+	}
+}
+
+func Test_setSpace(t *testing.T) {
+	const chunkLen = 12
+	const chunkLenV = 10
+	const chunkLenH = 11
+	world, err := newChunkedWorld(chunkLenV, chunkLenH, chunkLen)
+	if err != nil {
+		t.Error(err)
+	}
+	for i := 0; i < chunkLenV*chunkLen; i++ {
+		for j := 0; j < chunkLenH*chunkLen; j++ {
+			err := world.SetSpace(uint64(int64(i)), uint64(int64(j)), i, j)
+			if err != nil {
+				t.Error(err)
+			}
+		}
+	}
+}
+
 func TestChunkedWorld_GetPlayerViewByCellCoordinate(t *testing.T) {
 	world, err := newChunkedWorld(10, 10, 16)
 	if err != nil {

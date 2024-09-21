@@ -69,9 +69,11 @@ func (w *ChunkedWorld) SetSpace(id uint64, child uint64, row int, col int) error
 	if row < 0 || col < 0 {
 		return errors.New("invalid coordinate")
 	}
-	chunkIndexRow := row / w.chunkLen
-	chunkIndexCol := col / w.chunkLen
-	chunk := w.world[chunkIndexRow][chunkIndexCol]
+	chunk, err := w.getChunkByCellCoordinate(row, col)
+	if err != nil {
+		return err
+	}
+
 	chunk.data[row%w.chunkLen][col%w.chunkLen] = GNode{
 		EntityID:  id,
 		TerrainID: child,
@@ -212,8 +214,10 @@ func (w *ChunkedWorld) getChunkByCellCoordinate(row int, col int) (*WorldChunk, 
 	if err != nil {
 		return nil, err
 	}
-	chunkIndexRow := row / w.chunkLen
-	chunkIndexCol := col / w.chunkLen
+	numbChunkV := w.rows / w.chunkLen
+	numbChunkH := w.cols / w.chunkLen
+	chunkIndexRow := numbChunkV/(row/w.chunkLen) - 1
+	chunkIndexCol := numbChunkH/(col/w.chunkLen) - 1
 	chunk := w.world[chunkIndexRow][chunkIndexCol]
 	return &chunk, nil
 }
