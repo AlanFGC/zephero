@@ -96,15 +96,36 @@ func Test_setSpace(t *testing.T) {
 	const chunkLen = 12
 	const chunkLenV = 10
 	const chunkLenH = 11
+
+	// Create a new chunked world
 	world, err := newChunkedWorld(chunkLenV, chunkLenH, chunkLen)
 	if err != nil {
-		t.Error(err)
+		t.Fatalf("Failed to create world: %v", err)
 	}
+
+	// Loop through all possible spaces and set their values
 	for i := 0; i < chunkLenV*chunkLen; i++ {
 		for j := 0; j < chunkLenH*chunkLen; j++ {
-			err := world.SetSpace(uint64(int64(i)), uint64(int64(j)), i, j)
+			err := world.SetSpace(uint64(i*world.chunkLen+j), uint64(j), i, j)
 			if err != nil {
-				t.Error(err)
+				t.Errorf("Error setting space at (%d, %d): %v", i, j, err)
+			}
+		}
+	}
+
+	// Verify that the spaces were set correctly by querying them again
+	for i := 0; i < chunkLenV*chunkLen; i++ {
+		for j := 0; j < chunkLenH*chunkLen; j++ {
+			node, err := world.GetSpace(i, j)
+			if err != nil {
+				t.Errorf("Error querying space at (%d, %d) after setting: %v", i, j, err)
+			}
+			if node == nil {
+				t.Errorf("Node is nil at (%d, %d) after setting", i, j)
+			}
+			res := node.GetId()
+			if res != uint64(i*world.chunkLen+j) {
+				t.Errorf("Wrong id at (%d, %d)", i, j)
 			}
 		}
 	}

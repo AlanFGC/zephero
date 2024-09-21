@@ -66,15 +66,17 @@ func newChunkData(chunkLen int) [][]GNode {
 }
 
 func (w *ChunkedWorld) SetSpace(id uint64, child uint64, row int, col int) error {
-	if row < 0 || col < 0 {
+	if row < 0 || row >= w.rows || col < 0 || col >= w.cols {
 		return errors.New("invalid coordinate")
 	}
 	chunk, err := w.getChunkByCellCoordinate(row, col)
 	if err != nil {
 		return err
 	}
+	indexRow := row % w.chunkLen
+	indexCol := col % w.chunkLen
 
-	chunk.data[row%w.chunkLen][col%w.chunkLen] = GNode{
+	chunk.data[indexRow][indexCol] = GNode{
 		EntityID:  id,
 		TerrainID: child,
 	}
@@ -184,8 +186,6 @@ func (w *ChunkedWorld) GetPlayerViewByCellCoordinate(row int, col int) ([]WorldC
 	numbChunkH := w.cols / w.chunkLen
 	startV := numbChunkV/(row/w.chunkLen) - 1
 	startH := numbChunkH/(col/w.chunkLen) - 1
-	fmt.Println("rows:cols", w.rows, w.cols)
-	fmt.Println("startV:", startV, "startH:", startH, "chunklen", w.chunkLen)
 	idx := 0
 	for i := startV; i < startV+3; i++ {
 		for j := startH; j < startH+3; j++ {
@@ -214,10 +214,27 @@ func (w *ChunkedWorld) getChunkByCellCoordinate(row int, col int) (*WorldChunk, 
 	if err != nil {
 		return nil, err
 	}
+
+	if w.chunkLen == 0 {
+		return nil, errors.New("chunkLen is 0")
+	}
 	numbChunkV := w.rows / w.chunkLen
 	numbChunkH := w.cols / w.chunkLen
-	chunkIndexRow := numbChunkV/(row/w.chunkLen) - 1
-	chunkIndexCol := numbChunkH/(col/w.chunkLen) - 1
+
+	var chunkIndexRow = 0
+	if row/w.chunkLen > 0 {
+		chunkIndexRow = row / w.chunkLen
+	}
+
+	var chunkIndexCol = 0
+	if col/w.chunkLen > 0 {
+		chunkIndexCol = col / w.chunkLen
+	}
+
+	if chunkIndexRow >= numbChunkV || chunkIndexCol >= numbChunkH {
+		return nil, errors.New(fmt.Sprintf("chunk index is out of range, chunkRow: %d, chunkCol: %d",
+			chunkIndexRow, chunkIndexCol))
+	}
 	chunk := w.world[chunkIndexRow][chunkIndexCol]
 	return &chunk, nil
 }
