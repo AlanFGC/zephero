@@ -76,6 +76,9 @@ func (w *ChunkedWorld) SetSpace(id uint64, child uint64, row int, col int) error
 	indexRow := row % w.chunkLen
 	indexCol := col % w.chunkLen
 
+	if indexRow < 0 || indexRow >= w.chunkLen || indexCol < 0 || indexCol >= w.chunkLen {
+		return errors.New(fmt.Sprintf("invalid chunk coordinate row %d, col %d", indexRow, indexCol))
+	}
 	chunk.data[indexRow][indexCol] = GNode{
 		EntityID:  id,
 		TerrainID: child,
@@ -95,7 +98,7 @@ func (w *ChunkedWorld) GetSpace(row int, col int) (Node, error) {
 }
 
 func (w *ChunkedWorld) GetSize() (int, int) {
-	return w.rows * w.chunkLen, w.cols * w.chunkLen
+	return w.rows, w.cols
 }
 
 func (w *ChunkedWorld) SaveWorld(dao *SqliteDAO) error {
@@ -198,8 +201,6 @@ func (w *ChunkedWorld) GetPlayerViewByCellCoordinate(row int, col int) ([]WorldC
 			if err != nil {
 				fmt.Println(fmt.Sprintf("err: %v", err))
 				return nil, err
-			} else {
-				fmt.Println(fmt.Sprintf("chunk %v", chunk.chunkId))
 			}
 			chunks[idx] = chunk
 		}
@@ -218,8 +219,6 @@ func (w *ChunkedWorld) getChunkByCellCoordinate(row int, col int) (*WorldChunk, 
 	if w.chunkLen == 0 {
 		return nil, errors.New("chunkLen is 0")
 	}
-	numbChunkV := w.rows / w.chunkLen
-	numbChunkH := w.cols / w.chunkLen
 
 	var chunkIndexRow = 0
 	if row/w.chunkLen > 0 {
@@ -231,7 +230,7 @@ func (w *ChunkedWorld) getChunkByCellCoordinate(row int, col int) (*WorldChunk, 
 		chunkIndexCol = col / w.chunkLen
 	}
 
-	if chunkIndexRow >= numbChunkV || chunkIndexCol >= numbChunkH {
+	if chunkIndexRow >= len(w.world) || chunkIndexCol >= len(w.world[chunkIndexRow]) {
 		return nil, errors.New(fmt.Sprintf("chunk index is out of range, chunkRow: %d, chunkCol: %d",
 			chunkIndexRow, chunkIndexCol))
 	}

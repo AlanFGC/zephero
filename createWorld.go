@@ -18,7 +18,6 @@ func main() {
 	rows := flag.Int("r", 100, "Optional: Number of rows (default: 10)")
 	cols := flag.Int("c", 100, "Optional: Number of columns (default: 10)")
 	chunkLen := flag.Int("len", 32, "Optional: Chunk length (default: 100)")
-
 	flag.Parse()
 
 	// Initialize the DAO
@@ -63,6 +62,7 @@ func main() {
 
 	// Set random UUIDs
 	err = setRandomUUIDs(w)
+
 	if err != nil {
 		log.Printf("Warning: failed to set random UUIDs: %v", err)
 		return
