@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -15,8 +14,8 @@ const WORLD_ID_ENV string = "WORLD_ID"
 
 // this function is created with the intent to be run when a new world has to be created.
 func main() {
-	rows := flag.Int("r", 100, "Optional: Number of rows (default: 10)")
-	cols := flag.Int("c", 100, "Optional: Number of columns (default: 10)")
+	rows := flag.Int("r", 10, "Optional: Number of rows (default: 10)")
+	cols := flag.Int("c", 10, "Optional: Number of columns (default: 10)")
 	chunkLen := flag.Int("len", 32, "Optional: Chunk length (default: 100)")
 	flag.Parse()
 
@@ -62,7 +61,6 @@ func main() {
 
 	// Set random UUIDs
 	err = setRandomUUIDs(w)
-
 	if err != nil {
 		log.Printf("Warning: failed to set random UUIDs: %v", err)
 		return
@@ -85,7 +83,7 @@ func setRandomUUIDs(w world.World) error {
 				id := utils.GenerateTimeBasedID()
 				err := w.SetSpace(id, 0, i, j)
 				if err != nil {
-					return errors.New("failed to set random ids")
+					return err
 				}
 			}
 		}

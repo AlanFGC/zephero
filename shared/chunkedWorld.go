@@ -46,18 +46,19 @@ func newChunkedWorld(chunkLenV int, chunkLenH int, chunkLen int) (*ChunkedWorld,
 		for colIndex := range rowChunk {
 			w.world[rowIndex][colIndex] = WorldChunk{
 				chunkId: idx,
-				data:    newChunkData(chunkLen),
+				data:    makeChunkData(chunkLen),
 			}
 			idx += 1
 		}
 	}
 	chunksCreated := len(w.world) * len(w.world[0])
+	fmt.Println(fmt.Sprintf("Rows: %d, Cols: %d", w.rows, w.cols))
 	fmt.Println("Total spaces created:", chunksCreated*chunkSize)
 	fmt.Println("Total chunks created:", chunksCreated)
 	return &w, nil
 }
 
-func newChunkData(chunkLen int) [][]GNode {
+func makeChunkData(chunkLen int) [][]GNode {
 	c := make([][]GNode, chunkLen)
 	for i := 0; i < chunkLen; i++ {
 		c[i] = make([]GNode, chunkLen)
@@ -73,12 +74,10 @@ func (w *ChunkedWorld) SetSpace(id uint64, child uint64, row int, col int) error
 	if err != nil {
 		return err
 	}
+
 	indexRow := row % w.chunkLen
 	indexCol := col % w.chunkLen
 
-	if indexRow < 0 || indexRow >= w.chunkLen || indexCol < 0 || indexCol >= w.chunkLen {
-		return errors.New(fmt.Sprintf("invalid chunk coordinate row %d, col %d", indexRow, indexCol))
-	}
 	chunk.data[indexRow][indexCol] = GNode{
 		EntityID:  id,
 		TerrainID: child,
@@ -220,19 +219,15 @@ func (w *ChunkedWorld) getChunkByCellCoordinate(row int, col int) (*WorldChunk, 
 		return nil, errors.New("chunkLen is 0")
 	}
 
-	var chunkIndexRow = 0
-	if row/w.chunkLen > 0 {
-		chunkIndexRow = row / w.chunkLen
-	}
-
-	var chunkIndexCol = 0
-	if col/w.chunkLen > 0 {
-		chunkIndexCol = col / w.chunkLen
-	}
+	chunkIndexRow := row / w.chunkSize
+	chunkIndexCol := col / w.chunkSize
 
 	if chunkIndexRow >= len(w.world) || chunkIndexCol >= len(w.world[chunkIndexRow]) {
-		return nil, errors.New(fmt.Sprintf("chunk index is out of range, chunkRow: %d, chunkCol: %d",
-			chunkIndexRow, chunkIndexCol))
+		fmt.Println(w.rows, w.cols)
+		fmt.Println(len(w.world[chunkIndexRow]))
+		return nil, errors.New(
+			fmt.Sprintf("chunk index is out of range: row=%d, col=%d, chunkIndexRow: %d chunkIndexCol: %d",
+				row, col, chunkIndexRow, chunkIndexCol))
 	}
 	chunk := w.world[chunkIndexRow][chunkIndexCol]
 	return &chunk, nil
