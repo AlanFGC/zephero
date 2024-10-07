@@ -77,6 +77,7 @@ func main() {
 
 func setRandomUUIDs(w world.World) error {
 	rows, cols := w.GetSize()
+	fmt.Println(rows, cols)
 	for i := 0; i < rows; i++ {
 		for j := 0; j < cols; j++ {
 			if utils.Chance(0.30) {

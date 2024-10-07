@@ -1,6 +1,7 @@
 package shared
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -70,6 +71,23 @@ func TestEncodeDecodeData(t *testing.T) {
 	}
 }
 
+func TestChunkedWorld_GetSize(t *testing.T) {
+	const chunkLen = 12
+	const chunkLenV = 10
+	const chunkLenH = 11
+	world, err := newChunkedWorld(chunkLenV, chunkLenH, chunkLen)
+	if err != nil {
+		t.Error(err)
+	}
+	expectedRows := chunkLenV * chunkLen
+	expectedCols := chunkLenH * chunkLen
+	rows, cols := world.GetSize()
+	if rows != expectedRows || cols != expectedCols {
+		t.Error(fmt.Sprintf("World size mismatch: rows: %d -> %d cols: %d -> %d",
+			rows, expectedRows, cols, expectedCols))
+	}
+}
+
 func Test_getSpace(t *testing.T) {
 	const chunkLen = 12
 	const chunkLenV = 10
@@ -93,9 +111,9 @@ func Test_getSpace(t *testing.T) {
 }
 
 func Test_setSpace(t *testing.T) {
-	const chunkLen = 64
-	const chunkLenV = 31
-	const chunkLenH = 3
+	const chunkLen = 32
+	const chunkLenV = 100
+	const chunkLenH = 100
 
 	// Create a new chunked world
 	world, err := newChunkedWorld(chunkLenV, chunkLenH, chunkLen)
@@ -113,9 +131,10 @@ func Test_setSpace(t *testing.T) {
 		}
 	}
 
+	rows, cols := world.GetSize()
 	// Verify that the spaces were set correctly by querying them again
-	for i := 0; i < chunkLenV*chunkLen; i++ {
-		for j := 0; j < chunkLenH*chunkLen; j++ {
+	for i := 0; i < rows; i++ {
+		for j := 0; j < cols; j++ {
 			node, err := world.GetSpace(i, j)
 			if err != nil {
 				t.Errorf("Error querying space at (%d, %d) after setting: %v", i, j, err)

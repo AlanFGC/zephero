@@ -32,8 +32,8 @@ func newChunkedWorld(chunkLenV int, chunkLenH int, chunkLen int) (*ChunkedWorld,
 
 	w := ChunkedWorld{
 		world:     make([][]WorldChunk, chunkLenV),
-		rows:      chunkLenV * chunkSize,
-		cols:      chunkLenH * chunkSize,
+		rows:      chunkLenV * chunkLen,
+		cols:      chunkLenH * chunkLen,
 		chunkSize: chunkSize,
 		chunkLen:  chunkLen,
 	}
@@ -219,8 +219,8 @@ func (w *ChunkedWorld) getChunkByCellCoordinate(row int, col int) (*WorldChunk, 
 		return nil, errors.New("chunkLen is 0")
 	}
 
-	chunkIndexRow := row / w.chunkSize
-	chunkIndexCol := col / w.chunkSize
+	chunkIndexRow := row / w.chunkLen
+	chunkIndexCol := col / w.chunkLen
 
 	if chunkIndexRow >= len(w.world) || chunkIndexCol >= len(w.world[chunkIndexRow]) {
 		fmt.Println(w.rows, w.cols)
