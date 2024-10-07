@@ -179,13 +179,13 @@ func DeserializeChunkData(data []byte) ([][]GNode, error) {
 
 func (w *ChunkedWorld) GetPlayerViewByCellCoordinate(row int, col int) ([]WorldChunk, error) {
 	err := w.checkCellCoordinate(row, col)
-	chunks := make([]WorldChunk, 9)
 	if err != nil {
-		return chunks, err
+		return nil, err
 	}
 
-	numbChunkV := w.rows / w.chunkLen
-	numbChunkH := w.cols / w.chunkLen
+	chunks := make([]WorldChunk, 9)
+	numbChunkV := w.rows
+	numbChunkH := w.cols
 	startV := numbChunkV/(row/w.chunkLen) - 1
 	startH := numbChunkH/(col/w.chunkLen) - 1
 	idx := 0
@@ -244,8 +244,9 @@ func (w *ChunkedWorld) getChunkByChunkCoordinate(row int, col int) (WorldChunk, 
 
 // returns an error if row and col are out of bounds
 func (w *ChunkedWorld) checkCellCoordinate(row int, col int) error {
-	if row < 0 || row > w.rows || col < 0 || col > w.cols {
-		return errors.New(fmt.Sprintf("Invalid coordinate: %d:%d", row, col))
+	if row < 0 || row >= w.rows || col < 0 || col >= w.cols {
+		return errors.New(fmt.Sprintf("Invalid coordinate: %d:%d, row:%d cols:%d", row, col,
+			w.rows, w.cols))
 	}
 	return nil
 }

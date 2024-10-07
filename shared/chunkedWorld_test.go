@@ -151,7 +151,7 @@ func Test_setSpace(t *testing.T) {
 }
 
 func TestChunkedWorld_GetPlayerViewByCellCoordinate(t *testing.T) {
-	world, err := newChunkedWorld(10, 10, 16)
+	world, err := newChunkedWorld(100, 100, 16)
 	if err != nil {
 		t.Error(err)
 	}
