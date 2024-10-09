@@ -47,11 +47,11 @@ func (d *SqliteDAO) SaveWorldChunk(worldId int, chunkRow int, chunkCol int, chun
 
 	// SQL statement to insert or update a world chunk
 	query := `
-	INSERT INTO world_chunk (world_id, row_id, col_id, data, last_updated, locked) 
+	INSERT INTO world_chunk (world_id, row_id, col_id, data, last_updated, locked)
 	VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP, 0)
-	ON CONFLICT(world_id, row_id, col_id) 
-	DO UPDATE SET 
-		data = excluded.data, 
+	ON CONFLICT(world_id, row_id, col_id)
+	DO UPDATE SET
+		data = excluded.data,
 		last_updated = CURRENT_TIMESTAMP,
 		locked = excluded.locked`
 
