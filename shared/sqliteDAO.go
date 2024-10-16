@@ -12,7 +12,7 @@ type SqliteDAO struct {
 	name string
 }
 
-const PATH = "containers/sqliteDB/"
+const PATH = "database/sqliteDB/"
 
 func NewSqliteDAO(name string) *SqliteDAO {
 	return &SqliteDAO{
