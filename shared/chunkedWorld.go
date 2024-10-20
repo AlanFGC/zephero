@@ -8,11 +8,6 @@ import (
 	"math"
 )
 
-type WorldChunk struct {
-	chunkId int
-	data    [][]GNode
-}
-
 type ChunkedWorld struct {
 	id        int
 	world     [][]WorldChunk
@@ -100,59 +95,12 @@ func (w *ChunkedWorld) GetSize() (int, int) {
 	return w.rows, w.cols
 }
 
-func (w *ChunkedWorld) SaveWorld(dao *SqliteDAO) error {
-	if dao == nil {
-		return errors.New("dao is nil")
-	}
-	for i := range w.world {
-		for j := range w.world[i] {
-			chunk := w.world[i][j]
-			byteData, err := SerializeChunkData(&chunk)
-			if err != nil {
-				fmt.Println(err)
-				return err
-			}
-			err = dao.SaveWorldChunk(w.id, i, j, byteData, false)
-			if err != nil {
-				fmt.Println(err)
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-func (w *ChunkedWorld) LoadWorld(dao *SqliteDAO) error {
-	if dao == nil {
-		return errors.New("dao is nil")
-	}
-	if len(w.world) != w.rows {
-		w.world = make([][]WorldChunk, w.rows)
+func (w *ChunkedWorld) GetChunkData() ([][]WorldChunk, error) {
+	if w.world == nil {
+		return nil, errors.New("world is empty")
 	}
 
-	for z := 0; z < w.rows; z++ {
-		if len(w.world[z]) != w.cols {
-			w.world[z] = make([]WorldChunk, w.cols)
-		}
-	}
-
-	for i := 0; i < w.rows; i++ {
-		for j := 0; j < w.cols; j++ {
-			data, err := dao.FetchWorldChunk(w.id, i, j)
-			if err != nil {
-				fmt.Println("err")
-				continue
-			}
-			matrix, err := DeserializeChunkData(data)
-			if err != nil {
-				fmt.Println(err)
-				continue
-			}
-			w.world[i][j].chunkId = i*w.chunkLen + j
-			w.world[i][j].data = matrix
-		}
-	}
-	return nil
+	return w.world, nil
 }
 
 func SerializeChunkData(chunk *WorldChunk) ([]byte, error) {

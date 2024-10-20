@@ -1,22 +1,18 @@
-DROP TABLE IF EXISTS world_chunks;
-DROP TABLE IF EXISTS world;
-
-
 CREATE TABLE world_chunk (
-  world_id INTEGER,
-  row_id INTEGER,
-  col_id INTEGER,
-  last_updated DATETIME DEFAULT CURRENT_TIMESTAMP,
-  locked BOOLEAN,
-  data chunk NOT NULL,
+  world_id INTEGER NOT NULL,
+  row_id INTEGER NOT NULL,
+  col_id INTEGER NOT NULL,
+  last_updated DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  locked BOOLEAN NOT NULL,
+  chunk BLOB NOT NULL,
   PRIMARY KEY (world_id, row_id, col_id)
 );
 
 
 CREATE TABLE world (
   world_id INTEGER PRIMARY KEY AUTOINCREMENT,
-  date_created DATETIME DEFAULT CURRENT_TIMESTAMP,
-  rows INTEGER,
-  columns INTEGER,
-  chunk_length INTEGER
+  date_created DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
+  row_length INTEGER NOT NULL,
+  column_length INTEGER NOT NULL,
+  chunk_length INTEGER NOT NULL
 )

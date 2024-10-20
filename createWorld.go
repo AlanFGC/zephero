@@ -1,43 +1,51 @@
 package main
 
 import (
+	"context"
+	"database/sql"
 	"flag"
 	"fmt"
+	_ "github.com/mattn/go-sqlite3"
 	"log"
 	"os"
 	"strconv"
+	worldRepo "zephero/database/sqlite_world_repo"
 	world "zephero/shared"
-	utils "zephero/utils"
+	"zephero/utils"
 )
 
 const WORLD_ID_ENV string = "WORLD_ID"
+const DEFAULT_DB_NAME string = "world.db"
+const PATH = "database/sqliteDB/"
 
 // this function is created with the intent to be run when a new world has to be created.
-func createWorld() {
+func main() {
 	rows := flag.Int("r", 10, "Optional: Number of rows (default: 10)")
 	cols := flag.Int("c", 10, "Optional: Number of columns (default: 10)")
 	chunkLen := flag.Int("len", 32, "Optional: Chunk length (default: 100)")
 	flag.Parse()
 
-	// Initialize the DAO
-	dao := world.NewSqliteDAO("world")
-	err := dao.OpenDb("world.db")
+	ctx := context.Background()
+
+	db, err := sql.Open("sqlite3", PATH+DEFAULT_DB_NAME)
 	if err != nil {
 		log.Fatalf("Error: failed to open DB: %v", err)
 		return
 	}
-	defer func() {
-		if err := dao.CloseDb(); err != nil {
-			log.Printf("Warning: failed to close DB: %v", err)
-		}
-	}()
+	worldQueries := worldRepo.New(db)
+	defer db.Close()
 
 	// Insert new world
-	id, err := dao.InsertNewWorld(*rows, *cols, *chunkLen)
+	id, err := worldQueries.InsertWorld(ctx, worldRepo.InsertWorldParams{
+		RowLength:    int64(*rows),
+		ColumnLength: int64(*cols),
+		ChunkLength:  int64(*chunkLen),
+	})
 	if err != nil {
 		log.Fatalf("Error: failed to insert new world: %v", err)
 		return
 	}
+
 	fmt.Println("New world ID:", id)
 
 	// Set environment variable
@@ -66,13 +74,30 @@ func createWorld() {
 		return
 	}
 
-	// Save the world
-	err = w.SaveWorld(dao)
+	chunks, err := w.GetChunkData()
 	if err != nil {
-		log.Fatalf("Error: failed to save world: %v", err)
-		return
+		log.Fatalf("Error: failed to get chunk data: %v", err)
 	}
-	fmt.Println("World was created successfully")
+	for i := 0; i < int(*rows); i++ {
+		for j := 0; j < int(*cols); j++ {
+			chunk := chunks[i][j]
+			binaryData, err := world.SerializeChunkData(&chunk)
+			if err != nil {
+				log.Fatalf("Error: failed to serialize chunk data: %v", err)
+			}
+			chunkId, err := worldQueries.InsertWorldChunk(ctx, worldRepo.InsertWorldChunkParams{
+				WorldID: id,
+				RowID:   int64(i),
+				ColID:   int64(j),
+				Locked:  false,
+				Chunk:   binaryData,
+			})
+			if err != nil {
+				log.Fatalf("Error: failed to insert new chunk: %v", err)
+			}
+			log.Printf("New chunk Saved to sql database: %d", chunkId)
+		}
+	}
 }
 
 func setRandomUUIDs(w world.World) error {
