@@ -18,7 +18,7 @@ func makeOrderedChunk() *WorldChunk {
 	}
 
 	chunk := WorldChunk{
-		chunkId: 0,
+		ChunkId: 0,
 		data:    arr,
 	}
 
@@ -164,8 +164,8 @@ func TestChunkedWorld_GetPlayerViewByCellCoordinate(t *testing.T) {
 		t.Error("Expected chunk array of size 9, got", len(view))
 	}
 	for i := 0; i < len(view); i++ {
-		if view[i].chunkId < 0 {
-			t.Error("Expected chunk at index", i, view[i].chunkId)
+		if view[i].ChunkId < 0 {
+			t.Error("Expected chunk at index", i, view[i].ChunkId)
 		}
 	}
 }

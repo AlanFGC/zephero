@@ -1,8 +1,10 @@
 package shared
 
 type WorldChunk struct {
-	chunkId int
+	ChunkId int
 	data    [][]GNode
+	Row     int
+	Col     int
 }
 
 type World interface {

@@ -40,8 +40,10 @@ func newChunkedWorld(chunkLenV int, chunkLenH int, chunkLen int) (*ChunkedWorld,
 	for rowIndex, rowChunk := range w.world {
 		for colIndex := range rowChunk {
 			w.world[rowIndex][colIndex] = WorldChunk{
-				chunkId: idx,
+				ChunkId: idx,
 				data:    makeChunkData(chunkLen),
+				Row:     rowIndex,
+				Col:     colIndex,
 			}
 			idx += 1
 		}
@@ -141,7 +143,7 @@ func (w *ChunkedWorld) GetPlayerViewByCellCoordinate(row int, col int) ([]WorldC
 		for j := startH; j < startH+3; j++ {
 			if i < 0 || j < 0 {
 				// chunkId -5 mean out of bounds
-				chunks[idx] = WorldChunk{chunkId: -5}
+				chunks[idx] = WorldChunk{ChunkId: -5}
 				continue
 			}
 			chunk, err := w.getChunkByChunkCoordinate(i, j)

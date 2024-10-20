@@ -87,8 +87,8 @@ func main() {
 			}
 			chunkId, err := worldQueries.InsertWorldChunk(ctx, worldRepo.InsertWorldChunkParams{
 				WorldID: id,
-				RowID:   int64(i),
-				ColID:   int64(j),
+				RowID:   int64(chunk.Row),
+				ColID:   int64(chunk.Col),
 				Locked:  false,
 				Chunk:   binaryData,
 			})
