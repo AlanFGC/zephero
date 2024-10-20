@@ -1,0 +1,9 @@
+version: "2"
+sql:
+  - engine: "sqlite"
+    queries: "sqliteDB/query.sql"
+    schema: "sqliteDB/world.sql"
+    gen:
+      go:
+        package: "sqlite_world_repo"
+        out: "sqlite_world_repo"
