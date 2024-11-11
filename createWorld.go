@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"database/sql"
-	"flag"
 	"fmt"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
@@ -19,15 +18,13 @@ const DEFAULT_DB_NAME string = "world.db"
 const PATH = "database/sqliteDB/"
 
 // this function is created with the intent to be run when a new world has to be created.
-func main() {
-	rows := flag.Int("r", 10, "Optional: Number of rows (default: 10)")
-	cols := flag.Int("c", 10, "Optional: Number of columns (default: 10)")
-	chunkLen := flag.Int("len", 32, "Optional: Chunk length (default: 100)")
-	flag.Parse()
-
+func createWorld(rows int, cols int, chunkLen int, defaultDbName string) {
 	ctx := context.Background()
-
-	db, err := sql.Open("sqlite3", PATH+DEFAULT_DB_NAME)
+	path := PATH + DEFAULT_DB_NAME
+	if len(defaultDbName) > 0 {
+		path = PATH + defaultDbName
+	}
+	db, err := sql.Open("sqlite3", path)
 	if err != nil {
 		log.Fatalf("Error: failed to open DB: %v", err)
 		return
@@ -37,9 +34,9 @@ func main() {
 
 	// Insert new world
 	id, err := worldQueries.InsertWorld(ctx, worldRepo.InsertWorldParams{
-		RowLength:    int64(*rows),
-		ColumnLength: int64(*cols),
-		ChunkLength:  int64(*chunkLen),
+		RowLength:    int64(rows),
+		ColumnLength: int64(cols),
+		ChunkLength:  int64(chunkLen),
 	})
 	if err != nil {
 		log.Fatalf("Error: failed to insert new world: %v", err)
@@ -57,7 +54,7 @@ func main() {
 	fmt.Println("WORLD_ID set to", os.Getenv(WORLD_ID_ENV))
 
 	// Create a new chunked world
-	w, err := world.NewChunkedWorld(*rows, *cols, *chunkLen)
+	w, err := world.NewChunkedWorld(rows, cols, chunkLen)
 	if err != nil {
 		log.Fatalf("Error: failed to create new world: %v", err)
 		return
@@ -78,8 +75,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error: failed to get chunk data: %v", err)
 	}
-	for i := 0; i < int(*rows); i++ {
-		for j := 0; j < int(*cols); j++ {
+	for i := 0; i < int(rows); i++ {
+		for j := 0; j < int(cols); j++ {
 			chunk := chunks[i][j]
 			binaryData, err := world.SerializeChunkData(&chunk)
 			if err != nil {
