@@ -1,7 +1,12 @@
 package main
 
-import "zephero/server"
+import (
+	"zephero/server"
+)
 
 func main() {
-	server.Start()
+	//createWorld(10, 10, 32, "worldDB")
+	gameManager := server.NewGameManager(100)
+	go server.RunWebSocketsServer(gameManager)
+	gameManager.Run()
 }
