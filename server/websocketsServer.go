@@ -40,8 +40,11 @@ func (s *WebSockServer) connectionLoop(ws *websocket.Conn) {
 		msg := buff[:buffSize]
 		fmt.Println("sending new event via web sockets	")
 		s.manager.SendEvent(PlayerEvent{
-			PlayerId: string(msg[:3]),
-			EventId:  string(msg[3:]),
+			PlayerId: "PLACE HOLDER ID",
+			GameEvent: GameEvent{
+				EventId: "ID",
+				Data:    string(msg),
+			},
 		})
 		ws.Write([]byte("Game manager event received"))
 	}
