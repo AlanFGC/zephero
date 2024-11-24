@@ -1,18 +1,29 @@
 package server
 
 import (
+	"errors"
 	"fmt"
+	"log"
+	"time"
 	"zephero/shared"
 )
 
 type GameManager struct {
-	events chan []PlayerEvent
-	world  shared.ChunkedWorld
+	events        chan []PlayerEvent
+	world         shared.ChunkedWorld
+	activePlayers map[string]PlayerState
+}
+
+type PlayerState struct {
+	userName  string
+	entityId  uint64
+	lastEvent time.Time
 }
 
 func NewGameManager(eventBatchSize int) *GameManager {
 	return &GameManager{
-		events: make(chan []PlayerEvent, eventBatchSize),
+		events:        make(chan []PlayerEvent, eventBatchSize),
+		activePlayers: make(map[string]PlayerState),
 	}
 }
 
@@ -22,15 +33,20 @@ func (game *GameManager) Configure(world *shared.ChunkedWorld) {
 
 func (game *GameManager) Run() {
 	for {
-		eventBatch, ok := <-game.events
-		fmt.Println("recieving data from event batch")
-		if !ok {
-			fmt.Println("Game event channel closed")
-			return
+		select {
+		case eventBatch, ok := <-game.events:
+			if !ok {
+				fmt.Println("Game event channel closed")
+				return
+			}
+			fmt.Println("receiving data from event batch")
+			for _, event := range eventBatch {
+				game.processEvent(&event)
+			}
+		default:
+			// No events in the channel; proceed with other tasks
 		}
-		for _, event := range eventBatch {
-			game.processEvent(&event)
-		}
+		game.timeOutActivePlayers()
 	}
 }
 
@@ -38,7 +54,56 @@ func (game *GameManager) SendEvent(event PlayerEvent) {
 	game.events <- []PlayerEvent{event}
 }
 
+func (game *GameManager) registerPlayer(event *PlayerEvent) error {
+	log.Println("Registering new player: ", event.PlayerId)
+	if game.activePlayers == nil {
+		game.activePlayers = make(map[string]PlayerState)
+	}
+	_, exists := game.activePlayers[event.PlayerId]
+	if !exists {
+		game.activePlayers[event.PlayerId] = PlayerState{
+			userName:  event.PlayerId,
+			lastEvent: time.Now(),
+		}
+	}
+	return nil
+}
+
+func (game *GameManager) unregisterPlayer(username string) error {
+	if game.activePlayers == nil || len(game.activePlayers) == 0 {
+		return errors.New("Failed to unregister player")
+	}
+	_, exists := game.activePlayers[username]
+	if exists == false {
+		log.Println("Warning: Failed to unregister player ", username)
+		return nil
+	}
+	delete(game.activePlayers, username)
+	return nil
+}
+
+const TIME_OUT_TIME = time.Second * 3
+
+func (game *GameManager) timeOutActivePlayers() {
+	currentTime := time.Now()
+	for _, player := range game.activePlayers {
+		time := currentTime.Sub(player.lastEvent)
+		if time > TIME_OUT_TIME {
+			log.Println("Removing player ", player.userName)
+			game.unregisterPlayer(player.userName)
+		}
+	}
+}
+
 func (game *GameManager) processEvent(event *PlayerEvent) string {
+	username := event.PlayerId
+	player, exists := game.activePlayers[username]
+	if !exists {
+		game.registerPlayer(event)
+	} else {
+		player.lastEvent = time.Now()
+		game.activePlayers[username] = player
+	}
 	var buffer string
 	switch event.GameEvent.EventId {
 	case E_SPAWN:
