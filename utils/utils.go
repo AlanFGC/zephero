@@ -1,12 +1,13 @@
 package utils
 
 import (
+	"fmt"
+	table "github.com/olekukonko/tablewriter"
 	"math/rand"
 	"os"
 	"strconv"
 	"time"
 	game "zephero/shared"
-	table "github.com/olekukonko/tablewriter"
 )
 
 func PrintWorld(w game.World) {
@@ -39,4 +40,21 @@ func GenerateTimeBasedID() uint64 {
 
 func Chance(probability float64) bool {
 	return rand.Float64() < probability
+}
+
+func SetRandomIds(w game.World) error {
+	rows, cols := w.GetSize()
+	fmt.Println(rows, cols)
+	for i := 0; i < rows; i++ {
+		for j := 0; j < cols; j++ {
+			if Chance(0.30) {
+				id := GenerateTimeBasedID()
+				err := w.SetSpace(id, 0, i, j)
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+	return nil
 }

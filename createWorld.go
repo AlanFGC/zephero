@@ -10,15 +10,15 @@ import (
 	"strconv"
 	worldRepo "zephero/database/sqlite_world_repo"
 	world "zephero/shared"
-	"zephero/utils"
 )
 
 const WORLD_ID_ENV string = "WORLD_ID"
 const DEFAULT_DB_NAME string = "world.db"
 const PATH = "database/sqliteDB/"
+const FAILED = -1
 
 // this function is created with the intent to be run when a new world has to be created.
-func createWorld(rows int, cols int, chunkLen int, defaultDbName string) {
+func createWorld(rows int, cols int, chunkLen int, defaultDbName string) int {
 	ctx := context.Background()
 	path := PATH + DEFAULT_DB_NAME
 	if len(defaultDbName) > 0 {
@@ -27,7 +27,7 @@ func createWorld(rows int, cols int, chunkLen int, defaultDbName string) {
 	db, err := sql.Open("sqlite3", path)
 	if err != nil {
 		log.Fatalf("Error: failed to open DB: %v", err)
-		return
+		return FAILED
 	}
 	worldQueries := worldRepo.New(db)
 	defer db.Close()
@@ -40,7 +40,7 @@ func createWorld(rows int, cols int, chunkLen int, defaultDbName string) {
 	})
 	if err != nil {
 		log.Fatalf("Error: failed to insert new world: %v", err)
-		return
+		return FAILED
 	}
 
 	fmt.Println("New world ID:", id)
@@ -49,7 +49,7 @@ func createWorld(rows int, cols int, chunkLen int, defaultDbName string) {
 	err = os.Setenv(WORLD_ID_ENV, strconv.FormatInt(id, 10))
 	if err != nil {
 		log.Fatalf("Error: failed to set environment variable: %v", err)
-		return
+		return FAILED
 	}
 	fmt.Println("WORLD_ID set to", os.Getenv(WORLD_ID_ENV))
 
@@ -57,26 +57,20 @@ func createWorld(rows int, cols int, chunkLen int, defaultDbName string) {
 	w, err := world.NewChunkedWorld(rows, cols, chunkLen)
 	if err != nil {
 		log.Fatalf("Error: failed to create new world: %v", err)
-		return
+		return FAILED
 	}
 	if w == nil {
 		log.Fatal("Error: null reference to world")
-		return
+		return FAILED
 	}
-
-	// Set random UUIDs
-	err = setRandomUUIDs(w)
-	if err != nil {
-		log.Printf("Warning: failed to set random UUIDs: %v", err)
-		return
-	}
-
 	chunks, err := w.GetChunkData()
 	if err != nil {
 		log.Fatalf("Error: failed to get chunk data: %v", err)
+		return FAILED
 	}
-	for i := 0; i < int(rows); i++ {
-		for j := 0; j < int(cols); j++ {
+
+	for i := 0; i < rows; i++ {
+		for j := 0; j < cols; j++ {
 			chunk := chunks[i][j]
 			binaryData, err := world.SerializeChunkData(&chunk)
 			if err != nil {
@@ -95,21 +89,6 @@ func createWorld(rows int, cols int, chunkLen int, defaultDbName string) {
 			log.Printf("New chunk Saved to sql database: %d", chunkId)
 		}
 	}
-}
 
-func setRandomUUIDs(w world.World) error {
-	rows, cols := w.GetSize()
-	fmt.Println(rows, cols)
-	for i := 0; i < rows; i++ {
-		for j := 0; j < cols; j++ {
-			if utils.Chance(0.30) {
-				id := utils.GenerateTimeBasedID()
-				err := w.SetSpace(id, 0, i, j)
-				if err != nil {
-					return err
-				}
-			}
-		}
-	}
-	return nil
+	return int(id)
 }

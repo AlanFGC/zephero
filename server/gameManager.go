@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -10,8 +11,9 @@ import (
 
 type GameManager struct {
 	events        chan []PlayerEvent
-	world         shared.ChunkedWorld
+	world         *shared.ChunkedWorld
 	activePlayers map[string]PlayerState
+	access        WorldAccess
 }
 
 type PlayerState struct {
@@ -27,8 +29,21 @@ func NewGameManager(eventBatchSize int) *GameManager {
 	}
 }
 
-func (game *GameManager) Configure(world *shared.ChunkedWorld) {
-	game.world = *world
+func (game *GameManager) Configure(ctx context.Context, world *shared.ChunkedWorld, dbPath string, worldId int) error {
+	if world != nil {
+		game.world = world
+		game.access.World = world
+	} else if len(dbPath) > 0 {
+		err := game.access.Preload(ctx, dbPath, worldId)
+		if err != nil {
+			log.Fatalf(err.Error())
+			return err
+		}
+		game.world = game.access.World
+	} else {
+		return errors.New(fmt.Sprintf("Invalid parameters for GameManager"))
+	}
+	return nil
 }
 
 func (game *GameManager) Run() {

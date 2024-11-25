@@ -12,8 +12,9 @@ type World interface {
 	GetSpace(row, col int) (Node, error)
 	GetSize() (int, int)
 	GetChunkData() ([][]WorldChunk, error)
+	SetChunk(chunkRowId int, chunkColId int, chunk [][]GNode) error
 }
 
-func NewChunkedWorld(chunkLenVertical int, chunkLenHorizontal int, chunkSideLen int) (World, error) {
-	return newChunkedWorld(chunkLenVertical, chunkLenHorizontal, chunkSideLen)
+func NewWorld(chunkLenVertical int, chunkLenHorizontal int, chunkSideLen int) (World, error) {
+	return NewChunkedWorld(chunkLenVertical, chunkLenHorizontal, chunkSideLen)
 }

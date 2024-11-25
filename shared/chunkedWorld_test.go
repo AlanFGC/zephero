@@ -75,7 +75,7 @@ func TestChunkedWorld_GetSize(t *testing.T) {
 	const chunkLen = 12
 	const chunkLenV = 10
 	const chunkLenH = 11
-	world, err := newChunkedWorld(chunkLenV, chunkLenH, chunkLen)
+	world, err := NewChunkedWorld(chunkLenV, chunkLenH, chunkLen)
 	if err != nil {
 		t.Error(err)
 	}
@@ -92,7 +92,7 @@ func Test_getSpace(t *testing.T) {
 	const chunkLen = 12
 	const chunkLenV = 10
 	const chunkLenH = 11
-	world, err := newChunkedWorld(chunkLenV, chunkLenH, chunkLen)
+	world, err := NewChunkedWorld(chunkLenV, chunkLenH, chunkLen)
 	if err != nil {
 		t.Error(err)
 	}
@@ -116,7 +116,7 @@ func Test_setSpace(t *testing.T) {
 	const chunkLenH = 100
 
 	// Create a new chunked world
-	world, err := newChunkedWorld(chunkLenV, chunkLenH, chunkLen)
+	world, err := NewChunkedWorld(chunkLenV, chunkLenH, chunkLen)
 	if err != nil {
 		t.Fatalf("Failed to create world: %v", err)
 	}
@@ -151,7 +151,7 @@ func Test_setSpace(t *testing.T) {
 }
 
 func TestChunkedWorld_GetPlayerViewByCellCoordinate(t *testing.T) {
-	world, err := newChunkedWorld(100, 100, 16)
+	world, err := NewChunkedWorld(100, 100, 16)
 	if err != nil {
 		t.Error(err)
 	}
@@ -166,6 +166,44 @@ func TestChunkedWorld_GetPlayerViewByCellCoordinate(t *testing.T) {
 	for i := 0; i < len(view); i++ {
 		if view[i].ChunkId < 0 {
 			t.Error("Expected chunk at index", i, view[i].ChunkId)
+		}
+	}
+}
+
+func TestChunkedWorld_SetChunk(t *testing.T) {
+	world, err := NewChunkedWorld(10, 10, 16)
+	if err != nil {
+		t.Error(err)
+	}
+	newChunk := makeChunkData(16)
+
+	customEid := uint64(53)
+
+	for i := 0; i < 16; i++ {
+		newChunk[i] = make([]GNode, 16)
+		for j := 0; j < 16; j++ {
+			newChunk[i][j] = GNode{
+				EntityID:  customEid,
+				TerrainID: customEid,
+			}
+		}
+	}
+
+	err = world.SetChunk(5, 5, newChunk)
+	if err != nil {
+		t.Error(err)
+	}
+	currentChunk, err := world.getChunkByChunkCoordinate(5, 5)
+	if err != nil {
+		t.Error(err)
+	}
+
+	for i := 0; i < 16; i++ {
+		for j := 0; j < 16; j++ {
+			node := currentChunk.data[i][j]
+			if node.EntityID != customEid || node.TerrainID != customEid {
+				t.Error("Unexpected entity ID")
+			}
 		}
 	}
 }

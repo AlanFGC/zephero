@@ -17,7 +17,7 @@ type ChunkedWorld struct {
 	chunkLen  int
 }
 
-func newChunkedWorld(chunkLenV int, chunkLenH int, chunkLen int) (*ChunkedWorld, error) {
+func NewChunkedWorld(chunkLenV int, chunkLenH int, chunkLen int) (*ChunkedWorld, error) {
 	chunkSize := int(math.Pow(float64(chunkLen), 2))
 	fmt.Println("chunksize: ", chunkSize)
 
@@ -95,6 +95,25 @@ func (w *ChunkedWorld) GetSpace(row int, col int) (Node, error) {
 
 func (w *ChunkedWorld) GetSize() (int, int) {
 	return w.rows, w.cols
+}
+
+func (w *ChunkedWorld) SetChunk(chunkRowId int, chunkColId int, chunk [][]GNode) error {
+	if chunkRowId < 0 || chunkRowId >= w.rows/w.chunkLen || chunkColId < 0 || chunkColId >= w.cols/w.chunkLen {
+		return errors.New("invalid coordinate")
+	}
+
+	if len(chunk) != w.chunkLen || len(chunk[0]) != w.chunkLen {
+		return errors.New("invalid chunk size")
+	}
+	oldId := w.world[chunkRowId][chunkColId].ChunkId
+	w.world[chunkColId][chunkRowId] = WorldChunk{
+		ChunkId: oldId,
+		data:    chunk,
+		Row:     chunkRowId,
+		Col:     chunkColId,
+	}
+
+	return nil
 }
 
 func (w *ChunkedWorld) GetChunkData() ([][]WorldChunk, error) {
@@ -201,7 +220,7 @@ func (w *ChunkedWorld) checkCellCoordinate(row int, col int) error {
 	return nil
 }
 
-func (w *ChunkedWorld) checkChunkCoordinate(row, col int) error {
+func (w *ChunkedWorld) checkChunkCoordinate(row int, col int) error {
 	chunkLenV := w.rows / w.chunkLen
 	chunkLenH := w.cols / w.chunkLen
 	if row < 0 || row > chunkLenV || col < 0 || col > chunkLenH {
