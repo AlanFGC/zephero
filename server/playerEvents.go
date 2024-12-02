@@ -14,4 +14,5 @@ const (
 	E_SPAWN   = "SPAWN"
 	E_MOVE    = "MOVE"
 	E_DESPAWN = "DESPAWN"
+	E_EXIT    = "EXIT"
 )

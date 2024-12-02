@@ -46,7 +46,7 @@ func (game *GameManager) Configure(ctx context.Context, world *shared.ChunkedWor
 	return nil
 }
 
-func (game *GameManager) Run() {
+func (game *GameManager) Run(ctx context.Context, dbPath string) {
 	for {
 		select {
 		case eventBatch, ok := <-game.events:
@@ -56,7 +56,17 @@ func (game *GameManager) Run() {
 			}
 			fmt.Println("receiving data from event batch")
 			for _, event := range eventBatch {
+				fmt.Println(event.GameEvent.EventId)
 				game.processEvent(&event)
+				if event.GameEvent.EventId == E_EXIT {
+					fmt.Println("SAVING")
+					err := game.access.Save(ctx, dbPath)
+					if err != nil {
+						log.Fatalf(err.Error())
+					} else {
+						return
+					}
+				}
 			}
 		default:
 			// No events in the channel; proceed with other tasks
@@ -102,10 +112,13 @@ const TIME_OUT_TIME = time.Second * 3
 func (game *GameManager) timeOutActivePlayers() {
 	currentTime := time.Now()
 	for _, player := range game.activePlayers {
-		time := currentTime.Sub(player.lastEvent)
-		if time > TIME_OUT_TIME {
+		currTime := currentTime.Sub(player.lastEvent)
+		if currTime > TIME_OUT_TIME {
 			log.Println("Removing player ", player.userName)
-			game.unregisterPlayer(player.userName)
+			err := game.unregisterPlayer(player.userName)
+			if err != nil {
+				log.Println(err.Error())
+			}
 		}
 	}
 }
@@ -114,7 +127,10 @@ func (game *GameManager) processEvent(event *PlayerEvent) string {
 	username := event.PlayerId
 	player, exists := game.activePlayers[username]
 	if !exists {
-		game.registerPlayer(event)
+		err := game.registerPlayer(event)
+		if err != nil {
+			return err.Error()
+		}
 	} else {
 		player.lastEvent = time.Now()
 		game.activePlayers[username] = player

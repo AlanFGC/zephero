@@ -13,7 +13,7 @@ type ChunkedWorld struct {
 	world     [][]WorldChunk
 	rows      int
 	cols      int
-	chunkSize int
+	ChunkSize int
 	chunkLen  int
 }
 
@@ -29,7 +29,7 @@ func NewChunkedWorld(chunkLenV int, chunkLenH int, chunkLen int) (*ChunkedWorld,
 		world:     make([][]WorldChunk, chunkLenV),
 		rows:      chunkLenV * chunkLen,
 		cols:      chunkLenH * chunkLen,
-		chunkSize: chunkSize,
+		ChunkSize: chunkSize,
 		chunkLen:  chunkLen,
 	}
 

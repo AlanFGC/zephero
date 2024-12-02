@@ -13,10 +13,11 @@ func main() {
 	}
 	gameManager := server.NewGameManager(100)
 	ctx := context.Background()
-	err := gameManager.Configure(ctx, nil, "database/sqliteDB/"+"world.db", 15)
+	dbPath := "database/sqliteDB/" + "world.db"
+	err := gameManager.Configure(ctx, nil, dbPath, 15)
 	if err != nil {
 		panic(err)
 	}
 	go server.RunWebSocketsServer(gameManager)
-	gameManager.Run()
+	gameManager.Run(ctx, dbPath)
 }

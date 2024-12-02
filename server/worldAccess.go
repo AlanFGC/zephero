@@ -20,6 +20,7 @@ func (wa *WorldAccess) Preload(ctx context.Context, path string, worldId int) er
 	if err != nil {
 		return err
 	}
+	wa.worldId = int64(worldId)
 	defer func() {
 		err := db.Close()
 		if err != nil {
@@ -68,6 +69,7 @@ func (wa *WorldAccess) Save(ctx context.Context, path string) error {
 	if wa.World == nil {
 		return fmt.Errorf("Error: world is nil")
 	}
+
 	db, err := sql.Open("sqlite3", path)
 	if err != nil {
 		return err
@@ -78,5 +80,43 @@ func (wa *WorldAccess) Save(ctx context.Context, path string) error {
 			log.Fatal(err)
 		}
 	}()
-	// TODO implement this
+
+	worldQueries := worldRepo.New(db)
+	rows, cols := wa.World.GetSize()
+	err = worldQueries.UpdateWorld(ctx, worldRepo.UpdateWorldParams{
+		RowLength:    int64(rows),
+		ColumnLength: int64(cols),
+		ChunkLength:  int64(wa.World.ChunkSize),
+		WorldID:      wa.worldId,
+	})
+	if err != nil {
+		return err
+	}
+
+	chunkData, err := wa.World.GetChunkData()
+	if err != nil {
+		return err
+	}
+
+	for i := 0; i < len(chunkData); i++ {
+		for j := 0; j < len(chunkData[0]); j++ {
+			chunk, err := gameWorld.SerializeChunkData(&chunkData[i][j])
+			if err != nil {
+				return err
+			}
+			err = worldQueries.UpdateWorldChunk(ctx, worldRepo.UpdateWorldChunkParams{
+				Locked:  false,
+				WorldID: wa.worldId,
+				Chunk:   chunk,
+				RowID:   int64(chunkData[i][j].Row),
+				ColID:   int64(chunkData[i][j].Col),
+			})
+			if err != nil {
+				log.Fatal("Failed to update chunk")
+				return err
+			}
+		}
+	}
+	fmt.Println(fmt.Sprint("Successfully saved world ", wa.worldId))
+	return nil
 }

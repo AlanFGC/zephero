@@ -42,11 +42,14 @@ func (s *WebSockServer) connectionLoop(ws *websocket.Conn) {
 		s.manager.SendEvent(PlayerEvent{
 			PlayerId: "PLACE HOLDER ID",
 			GameEvent: GameEvent{
-				EventId: "ID",
+				EventId: string(msg),
 				Data:    string(msg),
 			},
 		})
-		ws.Write([]byte("Game manager event received"))
+		_, err = ws.Write([]byte("Game manager event received"))
+		if err != nil {
+			fmt.Println(err)
+		}
 	}
 }
 
