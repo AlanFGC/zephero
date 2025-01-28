@@ -42,9 +42,6 @@ func createWorld(rows int, cols int, chunkLen int, defaultDbName string) int {
 		log.Fatalf("Error: failed to insert new world: %v", err)
 		return FAILED
 	}
-
-	fmt.Println("New world ID:", id)
-
 	// Set environment variable
 	err = os.Setenv(WORLD_ID_ENV, strconv.FormatInt(id, 10))
 	if err != nil {

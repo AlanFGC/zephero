@@ -51,15 +51,14 @@ func (game *GameManager) Run(ctx context.Context, dbPath string) {
 		select {
 		case eventBatch, ok := <-game.events:
 			if !ok {
-				fmt.Println("Game event channel closed")
-				return
+				log.Println("GameManager event channel closed")
+				continue
 			}
-			fmt.Println("receiving data from event batch")
+
 			for _, event := range eventBatch {
-				fmt.Println(event.GameEvent.EventId)
 				game.processEvent(&event)
 				if event.GameEvent.EventId == E_EXIT {
-					fmt.Println("SAVING")
+					log.Println("Shutting down...")
 					err := game.access.Save(ctx, dbPath)
 					if err != nil {
 						log.Fatalf(err.Error())

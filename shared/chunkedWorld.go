@@ -5,6 +5,7 @@ import (
 	"encoding/gob"
 	"errors"
 	"fmt"
+	"log"
 	"math"
 )
 
@@ -19,7 +20,7 @@ type ChunkedWorld struct {
 
 func NewChunkedWorld(chunkLenV int, chunkLenH int, chunkLen int) (*ChunkedWorld, error) {
 	chunkSize := int(math.Pow(float64(chunkLen), 2))
-	fmt.Println("chunksize: ", chunkSize)
+	log.Println(fmt.Sprintf("chunksize: %d", chunkSize))
 
 	if chunkSize&3 != 0 {
 		return nil, errors.New("chunk size needs to be a multiple of 4")
@@ -36,12 +37,13 @@ func NewChunkedWorld(chunkLenV int, chunkLenH int, chunkLen int) (*ChunkedWorld,
 	for i := 0; i < chunkLenV; i++ {
 		w.world[i] = make([]WorldChunk, chunkLenH)
 	}
+
 	var idx = 0
 	for rowIndex, rowChunk := range w.world {
 		for colIndex := range rowChunk {
 			w.world[rowIndex][colIndex] = WorldChunk{
 				ChunkId: idx,
-				data:    makeChunkData(chunkLen),
+				Data:    makeChunkData(chunkLen),
 				Row:     rowIndex,
 				Col:     colIndex,
 			}
@@ -49,9 +51,9 @@ func NewChunkedWorld(chunkLenV int, chunkLenH int, chunkLen int) (*ChunkedWorld,
 		}
 	}
 	chunksCreated := len(w.world) * len(w.world[0])
-	fmt.Println(fmt.Sprintf("Rows: %d, Cols: %d", w.rows, w.cols))
-	fmt.Println("Total spaces created:", chunksCreated*chunkSize)
-	fmt.Println("Total chunks created:", chunksCreated)
+	log.Println(fmt.Sprintf("Rows: %d, Cols: %d", w.rows, w.cols))
+	log.Println("Total spaces created:", chunksCreated*chunkSize)
+	log.Println("Total chunks created:", chunksCreated)
 	return &w, nil
 }
 
@@ -75,7 +77,7 @@ func (w *ChunkedWorld) SetSpace(id uint64, child uint64, row int, col int) error
 	indexRow := row % w.chunkLen
 	indexCol := col % w.chunkLen
 
-	chunk.data[indexRow][indexCol] = GNode{
+	chunk.Data[indexRow][indexCol] = GNode{
 		EntityID:  id,
 		TerrainID: child,
 	}
@@ -89,7 +91,7 @@ func (w *ChunkedWorld) GetSpace(row int, col int) (Node, error) {
 	chunkIndexRow := row / w.chunkLen
 	chunkIndexCol := col / w.chunkLen
 	chunk := w.world[chunkIndexRow][chunkIndexCol]
-	node := chunk.data[row%w.chunkLen][col%w.chunkLen]
+	node := chunk.Data[row%w.chunkLen][col%w.chunkLen]
 	return &node, nil
 }
 
@@ -108,7 +110,7 @@ func (w *ChunkedWorld) SetChunk(chunkRowId int, chunkColId int, chunk [][]GNode)
 	oldId := w.world[chunkRowId][chunkColId].ChunkId
 	w.world[chunkColId][chunkRowId] = WorldChunk{
 		ChunkId: oldId,
-		data:    chunk,
+		Data:    chunk,
 		Row:     chunkRowId,
 		Col:     chunkColId,
 	}
@@ -125,7 +127,7 @@ func (w *ChunkedWorld) GetChunkData() ([][]WorldChunk, error) {
 }
 
 func SerializeChunkData(chunk *WorldChunk) ([]byte, error) {
-	data := &chunk.data
+	data := &chunk.Data
 	var buffer bytes.Buffer
 	gob.Register(GNode{})
 	encoder := gob.NewEncoder(&buffer)
@@ -174,6 +176,7 @@ func (w *ChunkedWorld) GetPlayerViewByCellCoordinate(row int, col int) ([]WorldC
 		}
 		idx += 1
 	}
+
 	return chunks, nil
 }
 

@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"sync"
 	worldRepo "zephero/database/sqlite_world_repo"
 	gameWorld "zephero/shared"
 )
@@ -12,6 +13,19 @@ import (
 type WorldAccess struct {
 	World   *gameWorld.ChunkedWorld
 	worldId int64
+	lock    sync.RWMutex
+}
+
+type PlayerView struct {
+	Chunk01 gameWorld.WorldChunk `json:"Chunk01"`
+	Chunk02 gameWorld.WorldChunk `json:"Chunk02"`
+	Chunk03 gameWorld.WorldChunk `json:"Chunk03"`
+	Chunk04 gameWorld.WorldChunk `json:"Chunk04"`
+	Chunk05 gameWorld.WorldChunk `json:"Chunk05"`
+	Chunk06 gameWorld.WorldChunk `json:"Chunk06"`
+	Chunk07 gameWorld.WorldChunk `json:"Chunk07"`
+	Chunk08 gameWorld.WorldChunk `json:"Chunk08"`
+	Chunk09 gameWorld.WorldChunk `json:"Chunk09"`
 }
 
 // TODO it's probably a better idea for this function to recieve a new world, instead of instantiating it
@@ -24,7 +38,7 @@ func (wa *WorldAccess) Preload(ctx context.Context, path string, worldId int) er
 	defer func() {
 		err := db.Close()
 		if err != nil {
-			log.Fatal(err)
+			log.Fatal("Failed to load from sql")
 		}
 	}()
 
@@ -119,4 +133,34 @@ func (wa *WorldAccess) Save(ctx context.Context, path string) error {
 	}
 	fmt.Println(fmt.Sprint("Successfully saved world ", wa.worldId))
 	return nil
+}
+
+func (wa *WorldAccess) write(id uint64, terrainId uint64, row int, col int) {
+	wa.lock.Lock()
+	err := wa.World.SetSpace(id, terrainId, row, col)
+	if err != nil {
+		log.Fatal(err)
+	}
+	wa.lock.Unlock()
+}
+
+func (wa *WorldAccess) playerView(row int, col int) PlayerView {
+	wa.lock.RLock()
+	chunk, err := wa.World.GetPlayerViewByCellCoordinate(row, col)
+	if err != nil {
+		log.Fatal("Failed to load player view")
+	}
+	playerResponse := PlayerView{
+		Chunk01: chunk[0],
+		Chunk02: chunk[1],
+		Chunk03: chunk[2],
+		Chunk04: chunk[3],
+		Chunk05: chunk[4],
+		Chunk06: chunk[5],
+		Chunk07: chunk[6],
+		Chunk08: chunk[7],
+		Chunk09: chunk[8],
+	}
+	wa.lock.RUnlock()
+	return playerResponse
 }

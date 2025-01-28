@@ -19,7 +19,7 @@ func makeOrderedChunk() *WorldChunk {
 
 	chunk := WorldChunk{
 		ChunkId: 0,
-		data:    arr,
+		Data:    arr,
 	}
 
 	return &chunk
@@ -58,13 +58,13 @@ func TestEncodeDecodeData(t *testing.T) {
 		t.Error(err)
 	}
 
-	if len(readChunk) != len(chunk.data) || len(readChunk[0]) != len(chunk.data[0]) {
+	if len(readChunk) != len(chunk.Data) || len(readChunk[0]) != len(chunk.Data[0]) {
 		t.Error("Chunk length mismatch")
 	}
 
 	for i := 0; i < len(readChunk); i++ {
 		for j := 0; j < len(readChunk[i]); j++ {
-			if readChunk[i][j] != chunk.data[i][j] {
+			if readChunk[i][j] != chunk.Data[i][j] {
 				t.Error("Chunk data mismatch")
 			}
 		}
@@ -200,7 +200,7 @@ func TestChunkedWorld_SetChunk(t *testing.T) {
 
 	for i := 0; i < 16; i++ {
 		for j := 0; j < 16; j++ {
-			node := currentChunk.data[i][j]
+			node := currentChunk.Data[i][j]
 			if node.EntityID != customEid || node.TerrainID != customEid {
 				t.Error("Unexpected entity ID")
 			}

@@ -1,8 +1,10 @@
 package server
 
 import (
+	"encoding/json"
 	"fmt"
 	"golang.org/x/net/websocket"
+	"log"
 	"net/http"
 )
 
@@ -19,7 +21,6 @@ func makeWebSockServer(manager *GameManager) *WebSockServer {
 }
 
 func (s *WebSockServer) addConn(conn *websocket.Conn) {
-	fmt.Println("NEW CONNECTION")
 	s.conns[conn] = true
 	s.connectionLoop(conn)
 	s.removeConn(conn)
@@ -34,21 +35,29 @@ func (s *WebSockServer) connectionLoop(ws *websocket.Conn) {
 	for {
 		buffSize, err := ws.Read(buff)
 		if err != nil {
-			fmt.Println(err)
+			log.Println("Error reading from websocket:", err)
 			continue
 		}
 		msg := buff[:buffSize]
-		fmt.Println("sending new event via web sockets	")
+
 		s.manager.SendEvent(PlayerEvent{
-			PlayerId: "PLACE HOLDER ID",
+			PlayerId: string(msg),
 			GameEvent: GameEvent{
 				EventId: string(msg),
 				Data:    string(msg),
 			},
 		})
-		_, err = ws.Write([]byte("Game manager event received"))
+
+		playerView := s.manager.access.playerView(3, 3)
+		jsonData, err := json.Marshal(playerView)
 		if err != nil {
-			fmt.Println(err)
+			log.Printf("Error marshaling JSON: %v", err)
+			continue
+		}
+
+		_, err = ws.Write(jsonData)
+		if err != nil {
+			log.Println("Failed to write response to socket")
 		}
 	}
 }

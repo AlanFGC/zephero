@@ -8,8 +8,8 @@ type Node interface {
 }
 
 type GNode struct {
-	EntityID  uint64
-	TerrainID uint64
+	EntityID  uint64 `json:"entity_id"`
+	TerrainID uint64 `json:"terrain_id"`
 }
 
 func NewGNode(id uint64) *GNode {

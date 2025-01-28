@@ -1,8 +1,8 @@
 package shared
 
 type WorldChunk struct {
-	ChunkId int
-	data    [][]GNode
+	ChunkId int       `json:"chunk_id"`
+	Data    [][]GNode `json:"data"`
 	Row     int
 	Col     int
 }
