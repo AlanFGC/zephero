@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 	"zephero/server"
-	"zephero/shared"
+	"zephero/world"
 )
 
 func main() {
-	worldId := shared.RunWorld(10, 10, 16, "world.db")
+	worldId := world.RunWorld(10, 10, 16, "world.db")
 	if worldId == -1 {
 		panic(fmt.Errorf("failed to create and save a new world"))
 	}

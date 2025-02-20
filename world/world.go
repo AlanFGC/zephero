@@ -1,4 +1,4 @@
-package shared
+package world
 
 type WorldChunk struct {
 	ChunkId int       `json:"chunk_id"`

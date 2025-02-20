@@ -1,4 +1,4 @@
-package shared
+package world
 
 type Node interface {
 	SetId(id uint64)
@@ -8,29 +8,29 @@ type Node interface {
 }
 
 type GNode struct {
-	EntityID  uint64 `json:"entity_id"`
-	TerrainID uint64 `json:"terrain_id"`
+	Eid uint64 `json:"entity_id"`
+	Tid uint64 `json:"terrain_id"`
 }
 
 func NewGNode(id uint64) *GNode {
 	n := new(GNode)
-	n.EntityID = id
-	n.TerrainID = 0
+	n.Eid = id
+	n.Tid = 0
 	return n
 }
 
 func (n *GNode) SetId(id uint64) {
-	n.EntityID = id
+	n.Eid = id
 }
 
 func (n *GNode) GetId() uint64 {
-	return n.EntityID
+	return n.Eid
 }
 
 func (n *GNode) GetTerrainId() uint64 {
-	return n.TerrainID
+	return n.Tid
 }
 
 func (n *GNode) SetTerrainId(id uint64) {
-	n.TerrainID = id
+	n.Tid = id
 }

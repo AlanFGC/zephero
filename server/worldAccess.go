@@ -7,7 +7,7 @@ import (
 	"log"
 	"sync"
 	worldRepo "zephero/database/sqlite_world_repo"
-	gameWorld "zephero/shared"
+	gameWorld "zephero/world"
 )
 
 type WorldAccess struct {

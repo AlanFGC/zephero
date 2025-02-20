@@ -1,4 +1,4 @@
-package shared
+package world
 
 import (
 	"fmt"
@@ -13,7 +13,7 @@ func makeOrderedChunk() *WorldChunk {
 
 	for i := range arr {
 		for j := range arr[i] {
-			arr[i][j] = GNode{EntityID: uint64(i*len(arr) + j)}
+			arr[i][j] = GNode{Eid: uint64(i*len(arr) + j)}
 		}
 	}
 
@@ -183,8 +183,8 @@ func TestChunkedWorld_SetChunk(t *testing.T) {
 		newChunk[i] = make([]GNode, 16)
 		for j := 0; j < 16; j++ {
 			newChunk[i][j] = GNode{
-				EntityID:  customEid,
-				TerrainID: customEid,
+				Eid: customEid,
+				Tid: customEid,
 			}
 		}
 	}
@@ -201,7 +201,7 @@ func TestChunkedWorld_SetChunk(t *testing.T) {
 	for i := 0; i < 16; i++ {
 		for j := 0; j < 16; j++ {
 			node := currentChunk.Data[i][j]
-			if node.EntityID != customEid || node.TerrainID != customEid {
+			if node.Eid != customEid || node.Tid != customEid {
 				t.Error("Unexpected entity ID")
 			}
 		}

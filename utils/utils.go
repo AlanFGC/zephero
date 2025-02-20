@@ -7,7 +7,7 @@ import (
 	"os"
 	"strconv"
 	"time"
-	game "zephero/shared"
+	game "zephero/world"
 )
 
 func PrintWorld(w game.World) {

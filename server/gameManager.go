@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"log"
 	"time"
-	"zephero/shared"
+	"zephero/world"
 )
 
 type GameManager struct {
 	events        chan []PlayerEvent
-	world         *shared.ChunkedWorld
+	world         *world.ChunkedWorld
 	activePlayers map[string]PlayerState
 	access        WorldAccess
 }
@@ -29,7 +29,7 @@ func NewGameManager(eventBatchSize int) *GameManager {
 	}
 }
 
-func (game *GameManager) Configure(ctx context.Context, world *shared.ChunkedWorld, dbPath string, worldId int) error {
+func (game *GameManager) Configure(ctx context.Context, world *world.ChunkedWorld, dbPath string, worldId int) error {
 	if world != nil {
 		game.world = world
 		game.access.World = world

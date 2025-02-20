@@ -1,4 +1,4 @@
-package shared
+package world
 
 import (
 	"bytes"
@@ -78,8 +78,8 @@ func (w *ChunkedWorld) SetSpace(id uint64, child uint64, row int, col int) error
 	indexCol := col % w.chunkLen
 
 	chunk.Data[indexRow][indexCol] = GNode{
-		EntityID:  id,
-		TerrainID: child,
+		Eid: id,
+		Tid: child,
 	}
 	return nil
 }
