@@ -3,9 +3,10 @@ package server
 import (
 	"encoding/json"
 	"fmt"
-	"golang.org/x/net/websocket"
 	"log"
 	"net/http"
+
+	"golang.org/x/net/websocket"
 )
 
 type WebSockServer struct {
@@ -36,7 +37,7 @@ func (s *WebSockServer) connectionLoop(ws *websocket.Conn) {
 		buffSize, err := ws.Read(buff)
 		if err != nil {
 			log.Println("Error reading from websocket:", err)
-			continue
+			return
 		}
 		msg := buff[:buffSize]
 
@@ -48,11 +49,10 @@ func (s *WebSockServer) connectionLoop(ws *websocket.Conn) {
 			},
 		})
 
-		playerView := s.manager.access.playerView(3, 3)
+		playerView := s.manager.access.playerView(120, 12)
 		jsonData, err := json.Marshal(playerView)
 		if err != nil {
-			log.Printf("Error marshaling JSON: %v", err)
-			continue
+			log.Println("Failed to marshal json")
 		}
 
 		_, err = ws.Write(jsonData)
