@@ -1,15 +1,15 @@
-package main
+package shared
 
 import (
 	"context"
 	"database/sql"
 	"fmt"
-	_ "github.com/mattn/go-sqlite3"
 	"log"
 	"os"
 	"strconv"
 	worldRepo "zephero/database/sqlite_world_repo"
-	world "zephero/shared"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 const WORLD_ID_ENV string = "WORLD_ID"
@@ -17,8 +17,8 @@ const DEFAULT_DB_NAME string = "world.db"
 const PATH = "database/sqliteDB/"
 const FAILED = -1
 
-// this function is created with the intent to be run when a new world has to be created.
-func createWorld(rows int, cols int, chunkLen int, defaultDbName string) int {
+// this function is created with the intent to be run when world has to be loaded from an sql DB
+func RunWorld(rows int, cols int, chunkLen int, defaultDbName string) int {
 	ctx := context.Background()
 	path := PATH + DEFAULT_DB_NAME
 	if len(defaultDbName) > 0 {
@@ -51,7 +51,7 @@ func createWorld(rows int, cols int, chunkLen int, defaultDbName string) int {
 	fmt.Println("WORLD_ID set to", os.Getenv(WORLD_ID_ENV))
 
 	// Create a new chunked world
-	w, err := world.NewChunkedWorld(rows, cols, chunkLen)
+	w, err := NewChunkedWorld(rows, cols, chunkLen)
 	if err != nil {
 		log.Fatalf("Error: failed to create new world: %v", err)
 		return FAILED
@@ -69,7 +69,7 @@ func createWorld(rows int, cols int, chunkLen int, defaultDbName string) int {
 	for i := 0; i < rows; i++ {
 		for j := 0; j < cols; j++ {
 			chunk := chunks[i][j]
-			binaryData, err := world.SerializeChunkData(&chunk)
+			binaryData, err := SerializeChunkData(&chunk)
 			if err != nil {
 				log.Fatalf("Error: failed to serialize chunk data: %v", err)
 			}

@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 	"zephero/server"
+	"zephero/shared"
 )
 
 func main() {
-	worldId := createWorld(10, 10, 16, "world.db")
+	worldId := shared.RunWorld(10, 10, 16, "world.db")
 	if worldId == -1 {
-		panic(fmt.Errorf("Failed to create and save a new world"))
+		panic(fmt.Errorf("failed to create and save a new world"))
 	}
 	gameManager := server.NewGameManager(100)
 	ctx := context.Background()
