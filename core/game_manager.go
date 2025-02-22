@@ -14,6 +14,8 @@ type GameManager struct {
 	world         *world.ChunkedWorld
 	activePlayers map[string]PlayerState
 	access        WorldAccess
+	tickCount     int
+	lastTick      time.Time
 }
 
 type PlayerState struct {
@@ -43,7 +45,26 @@ func (game *GameManager) Configure(ctx context.Context, world *world.ChunkedWorl
 	} else {
 		return errors.New(fmt.Sprintf("Invalid parameters for GameManager"))
 	}
+	game.lastTick = time.Now()
+	game.tickCount = 0
 	return nil
+}
+
+const TicksPerSecond = 60
+
+func (game *GameManager) tick() {
+	now := time.Now()
+	if now.Sub(game.lastTick) >= time.Second {
+		if game.tickCount < TicksPerSecond {
+			fmt.Println("Warning failed to reach minimum tick rate", TicksPerSecond)
+		}
+		game.lastTick = now
+		game.tickCount = 0
+	}
+	if game.tickCount < TicksPerSecond {
+		// fmt.Println("Tick")
+	}
+	game.tickCount++
 }
 
 func (game *GameManager) Run(ctx context.Context, dbPath string) {
@@ -70,6 +91,7 @@ func (game *GameManager) Run(ctx context.Context, dbPath string) {
 		default:
 			// No events in the channel; proceed with other tasks
 		}
+		game.tick()
 		game.timeOutActivePlayers()
 	}
 }
