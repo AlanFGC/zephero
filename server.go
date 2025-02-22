@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
-	"zephero/server"
-	"zephero/world"
+	"zephero/core"
+	"zephero/core/world"
 )
 
 func main() {
@@ -12,13 +12,13 @@ func main() {
 	if worldId == -1 {
 		panic(fmt.Errorf("failed to create and save a new world"))
 	}
-	gameManager := server.NewGameManager(100)
+	gameManager := core.NewGameManager(100)
 	ctx := context.Background()
 	dbPath := "database/sqliteDB/" + "world.db"
 	err := gameManager.Configure(ctx, nil, dbPath, worldId)
 	if err != nil {
 		panic(err)
 	}
-	go server.RunWebSocketsServer(gameManager)
+	go core.RunWebSocketsServer(gameManager)
 	gameManager.Run(ctx, dbPath)
 }

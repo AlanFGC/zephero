@@ -1,4 +1,4 @@
-package server
+package core
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log"
 	"time"
-	"zephero/world"
+	"zephero/core/world"
 )
 
 type GameManager struct {
@@ -106,7 +106,7 @@ func (game *GameManager) unregisterPlayer(username string) error {
 	return nil
 }
 
-const TIME_OUT_TIME = time.Second * 3
+const TIME_OUT_TIME = time.Second * 30
 
 func (game *GameManager) timeOutActivePlayers() {
 	currentTime := time.Now()

@@ -1,4 +1,4 @@
-package server
+package core
 
 import (
 	"context"
@@ -6,26 +6,26 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	coreWorld "zephero/core/world"
 	worldRepo "zephero/database/sqlite_world_repo"
-	gameWorld "zephero/world"
 )
 
 type WorldAccess struct {
-	World   *gameWorld.ChunkedWorld
+	World   *coreWorld.ChunkedWorld
 	worldId int64
 	lock    sync.RWMutex
 }
 
 type PlayerView struct {
-	Chunk01 gameWorld.WorldChunk `json:"Chunk01"`
-	Chunk02 gameWorld.WorldChunk `json:"Chunk02"`
-	Chunk03 gameWorld.WorldChunk `json:"Chunk03"`
-	Chunk04 gameWorld.WorldChunk `json:"Chunk04"`
-	Chunk05 gameWorld.WorldChunk `json:"Chunk05"`
-	Chunk06 gameWorld.WorldChunk `json:"Chunk06"`
-	Chunk07 gameWorld.WorldChunk `json:"Chunk07"`
-	Chunk08 gameWorld.WorldChunk `json:"Chunk08"`
-	Chunk09 gameWorld.WorldChunk `json:"Chunk09"`
+	Chunk01 coreWorld.WorldChunk `json:"Chunk01"`
+	Chunk02 coreWorld.WorldChunk `json:"Chunk02"`
+	Chunk03 coreWorld.WorldChunk `json:"Chunk03"`
+	Chunk04 coreWorld.WorldChunk `json:"Chunk04"`
+	Chunk05 coreWorld.WorldChunk `json:"Chunk05"`
+	Chunk06 coreWorld.WorldChunk `json:"Chunk06"`
+	Chunk07 coreWorld.WorldChunk `json:"Chunk07"`
+	Chunk08 coreWorld.WorldChunk `json:"Chunk08"`
+	Chunk09 coreWorld.WorldChunk `json:"Chunk09"`
 }
 
 // TODO it's probably a better idea for this function to recieve a new world, instead of instantiating it
@@ -48,7 +48,7 @@ func (wa *WorldAccess) Preload(ctx context.Context, path string, worldId int) er
 		return err
 	}
 
-	world, err := gameWorld.NewChunkedWorld(int(sqlWorld.RowLength),
+	world, err := coreWorld.NewChunkedWorld(int(sqlWorld.RowLength),
 		int(sqlWorld.ColumnLength),
 		int(sqlWorld.ChunkLength))
 	if err != nil || world == nil {
@@ -66,7 +66,7 @@ func (wa *WorldAccess) Preload(ctx context.Context, path string, worldId int) er
 	}
 
 	for i := 0; i < len(sqlChunks); i++ {
-		chunk, err := gameWorld.DeserializeChunkData(sqlChunks[i].Chunk)
+		chunk, err := coreWorld.DeserializeChunkData(sqlChunks[i].Chunk)
 		if err != nil {
 			return err
 		}
@@ -114,7 +114,7 @@ func (wa *WorldAccess) Save(ctx context.Context, path string) error {
 
 	for i := 0; i < len(chunkData); i++ {
 		for j := 0; j < len(chunkData[0]); j++ {
-			chunk, err := gameWorld.SerializeChunkData(&chunkData[i][j])
+			chunk, err := coreWorld.SerializeChunkData(&chunkData[i][j])
 			if err != nil {
 				return err
 			}

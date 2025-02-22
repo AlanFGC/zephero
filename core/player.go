@@ -1,4 +1,4 @@
-package server
+package core
 
 type PlayerEvent struct {
 	PlayerId  string    `json:"playerId"`
