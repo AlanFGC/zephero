@@ -39,12 +39,11 @@ func (game *GameManager) Configure(ctx context.Context, world *world.ChunkedWorl
 	} else if len(dbPath) > 0 {
 		err := game.access.Preload(ctx, dbPath, worldId)
 		if err != nil {
-			log.Fatalf(err.Error())
-			return err
+			log.Fatalf("%s", err.Error())
 		}
 		game.world = game.access.World
 	} else {
-		return errors.New(fmt.Sprintf("Invalid parameters for GameManager"))
+		return fmt.Errorf("invalid parameters for GameManager")
 	}
 	game.lastTick = time.Now()
 	game.tickCount = 0
