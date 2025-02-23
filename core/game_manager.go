@@ -21,7 +21,7 @@ type GameManager struct {
 type PlayerState struct {
 	userName       string
 	lastEvent      time.Time
-	playerChannel  chan PlayerView
+	onUpdateCb     func(view *PlayerView)
 	removePlayerCb func()
 }
 
@@ -51,14 +51,21 @@ func (game *GameManager) Configure(ctx context.Context, world *world.ChunkedWorl
 	return nil
 }
 
-const TicksPerSecond = 60
-
 func (game *GameManager) updatePlayerLastEvent(username string) {
 	if player, exists := game.activePlayers[username]; exists {
 		player.lastEvent = time.Now()
 		game.activePlayers[username] = player
 	}
 }
+
+func (game *GameManager) sendPlayerUpdates() {
+	for _, state := range game.activePlayers {
+		res := game.access.playerView(0, 0)
+		state.onUpdateCb(&res)
+	}
+}
+
+const TicksPerSecond = 60
 
 func (game *GameManager) tick() {
 	now := time.Now()
@@ -97,6 +104,7 @@ func (game *GameManager) Run() {
 			// No events in the channel; proceed with other tasks
 		}
 		game.tick()
+		game.sendPlayerUpdates()
 		game.timeOutActivePlayers()
 	}
 }
@@ -105,32 +113,28 @@ func (game *GameManager) SendEvent(event PlayerEvent) {
 	game.events <- []PlayerEvent{event}
 }
 
-func (game *GameManager) registerPlayer(username string, onConnectionEnded func()) chan PlayerView {
+func (game *GameManager) registerPlayer(username string, onUpdate func(view *PlayerView), onConnectionEnded func()) {
 	if game.activePlayers == nil {
 		game.activePlayers = make(map[string]PlayerState)
 	}
 
-	playerState, exists := game.activePlayers[username]
+	_, exists := game.activePlayers[username]
 	if !exists {
-		playerChannel := make(chan PlayerView)
 		game.activePlayers[username] = PlayerState{
 			userName:       username,
 			lastEvent:      time.Now(),
-			playerChannel:  playerChannel,
+			onUpdateCb:     onUpdate,
 			removePlayerCb: onConnectionEnded,
 		}
-		return playerChannel
 	}
-
-	return playerState.playerChannel
 }
 
 func (game *GameManager) unregisterPlayer(username string) error {
-	if game.activePlayers == nil || len(game.activePlayers) == 0 {
+	if len(game.activePlayers) == 0 {
 		return errors.New("failed to unregister player")
 	}
 	playerState, exists := game.activePlayers[username]
-	if exists == false {
+	if !exists {
 		log.Println("Warning: Failed to unregister player ", username)
 		return nil
 	}

@@ -1,6 +1,7 @@
 package core
 
 import (
+	"encoding/json"
 	"fmt"
 	"golang.org/x/net/websocket"
 	"log"
@@ -19,25 +20,43 @@ func makeWebSockServer(manager *GameManager) *WebSockServer {
 	}
 }
 
-func (s *WebSockServer) addConn(conn *websocket.Conn) {
-	// TODO add username
-	username := conn.RemoteAddr().String()
-	s.conns[conn] = username
-	playerChan := s.manager.registerPlayer(username, func() {
-		log.Println("removing player: ", username)
-		s.removeConn(conn)
-	})
-	s.connectionLoop(conn)
-	log.Println("Connection terminated")
-	close(playerChan)
-}
-
 func (s *WebSockServer) removeConn(conn *websocket.Conn) {
 	delete(s.conns, conn)
 	err := conn.Close()
 	if err != nil {
 		fmt.Println("Error closing connection", conn, err)
 	}
+}
+
+func (s *WebSockServer) sendPlayerUpdates(conn *websocket.Conn, playerView *PlayerView) {
+	jsonData, err := json.Marshal(playerView)
+	if err != nil {
+		log.Println("Failed to marshal json")
+	}
+
+	_, err = conn.Write(jsonData)
+	if err != nil {
+		log.Println("Failed to write response to socket")
+	}
+}
+
+func (s *WebSockServer) addConn(conn *websocket.Conn) {
+	// TODO add username
+	username := conn.RemoteAddr().String()
+	s.conns[conn] = username
+
+	onUpdate := func(view *PlayerView) {
+		s.sendPlayerUpdates(conn, view)
+	}
+
+	onConnectionEnded := func() {
+		log.Println("removing player: ", username)
+		s.removeConn(conn)
+	}
+
+	s.manager.registerPlayer(username, onUpdate, onConnectionEnded)
+	s.connectionLoop(conn)
+	log.Println("Connection ended for user: ", username)
 }
 
 func (s *WebSockServer) connectionLoop(ws *websocket.Conn) {

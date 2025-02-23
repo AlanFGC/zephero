@@ -149,8 +149,6 @@ func DeserializeChunkData(data []byte) ([][]GNode, error) {
 }
 
 func (w *ChunkedWorld) GetPlayerViewByCellCoordinate(row int, col int) ([]WorldChunk, error) {
-	log.Println("GetPlayerViewByCellCoordinate")
-
 	centerV := row / w.chunkLen
 	centerH := col / w.chunkLen
 	chunks := make([]WorldChunk, 9)
@@ -160,7 +158,6 @@ func (w *ChunkedWorld) GetPlayerViewByCellCoordinate(row int, col int) ([]WorldC
 	for i := centerV - 1; i <= centerV+1; i++ {
 		for j := centerH - 1; j <= centerH+1; j++ {
 			if i >= 0 && i < w.rows && j >= 0 && j < w.cols {
-				log.Println("Using existing chunk")
 				chunks[idx] = w.world[i][j]
 			} else {
 				chunks[idx] = invalidChunk
