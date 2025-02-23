@@ -1,64 +1,64 @@
 package core
 
 import (
-	"encoding/json"
 	"fmt"
+	"golang.org/x/net/websocket"
 	"log"
 	"net/http"
-
-	"golang.org/x/net/websocket"
 )
 
 type WebSockServer struct {
-	conns   map[*websocket.Conn]bool
+	conns   map[*websocket.Conn]string
 	manager *GameManager
 }
 
 func makeWebSockServer(manager *GameManager) *WebSockServer {
 	return &WebSockServer{
-		conns:   make(map[*websocket.Conn]bool),
+		conns:   make(map[*websocket.Conn]string),
 		manager: manager,
 	}
 }
 
 func (s *WebSockServer) addConn(conn *websocket.Conn) {
-	s.conns[conn] = true
+	// TODO add username
+	username := conn.RemoteAddr().String()
+	s.conns[conn] = username
+	playerChan := s.manager.registerPlayer(username, func() {
+		log.Println("removing player: ", username)
+		s.removeConn(conn)
+	})
 	s.connectionLoop(conn)
-	s.removeConn(conn)
+	log.Println("Connection terminated")
+	close(playerChan)
 }
 
 func (s *WebSockServer) removeConn(conn *websocket.Conn) {
 	delete(s.conns, conn)
+	err := conn.Close()
+	if err != nil {
+		fmt.Println("Error closing connection", conn, err)
+	}
 }
 
 func (s *WebSockServer) connectionLoop(ws *websocket.Conn) {
 	buff := make([]byte, 1024)
 	for {
+		// Input
 		buffSize, err := ws.Read(buff)
 		if err != nil {
-			log.Println("Error reading from websocket:", err)
+			log.Println("Websockets connection interrupted: ", err)
 			return
 		}
 		msg := buff[:buffSize]
 
 		s.manager.SendEvent(PlayerEvent{
-			PlayerId: string(msg),
+			PlayerId: s.conns[ws],
 			GameEvent: GameEvent{
 				EventId: string(msg),
 				Data:    string(msg),
 			},
 		})
 
-		playerView := s.manager.access.playerView(120, 12)
-		jsonData, err := json.Marshal(playerView)
-		if err != nil {
-			log.Println("Failed to marshal json")
-		}
-
-		_, err = ws.Write(jsonData)
-		if err != nil {
-			log.Println("Failed to write response to socket")
-		}
 	}
 }
 

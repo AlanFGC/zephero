@@ -81,7 +81,7 @@ func (wa *WorldAccess) Preload(ctx context.Context, path string, worldId int) er
 
 func (wa *WorldAccess) Save(ctx context.Context, path string) error {
 	if wa.World == nil {
-		return fmt.Errorf("Error: world is nil")
+		return fmt.Errorf("error: world is nil")
 	}
 
 	db, err := sql.Open("sqlite3", path)

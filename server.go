@@ -20,5 +20,5 @@ func main() {
 		panic(err)
 	}
 	go core.RunWebSocketsServer(gameManager)
-	gameManager.Run(ctx, dbPath)
+	gameManager.Run()
 }

@@ -19,9 +19,10 @@ type GameManager struct {
 }
 
 type PlayerState struct {
-	userName  string
-	entityId  uint64
-	lastEvent time.Time
+	userName       string
+	lastEvent      time.Time
+	playerChannel  chan PlayerView
+	removePlayerCb func()
 }
 
 func NewGameManager(eventBatchSize int) *GameManager {
@@ -52,6 +53,13 @@ func (game *GameManager) Configure(ctx context.Context, world *world.ChunkedWorl
 
 const TicksPerSecond = 60
 
+func (game *GameManager) updatePlayerLastEvent(username string) {
+	if player, exists := game.activePlayers[username]; exists {
+		player.lastEvent = time.Now()
+		game.activePlayers[username] = player
+	}
+}
+
 func (game *GameManager) tick() {
 	now := time.Now()
 	if now.Sub(game.lastTick) >= time.Second {
@@ -67,7 +75,7 @@ func (game *GameManager) tick() {
 	game.tickCount++
 }
 
-func (game *GameManager) Run(ctx context.Context, dbPath string) {
+func (game *GameManager) Run() {
 	for {
 		select {
 		case eventBatch, ok := <-game.events:
@@ -77,15 +85,12 @@ func (game *GameManager) Run(ctx context.Context, dbPath string) {
 			}
 
 			for _, event := range eventBatch {
-				game.processEvent(&event)
-				if event.GameEvent.EventId == E_EXIT {
-					log.Println("Shutting down...")
-					err := game.access.Save(ctx, dbPath)
-					if err != nil {
-						log.Fatalf(err.Error())
-					} else {
-						return
-					}
+				username := event.PlayerId
+				game.updatePlayerLastEvent(username)
+				err := game.processEvent(&event)
+				if err != nil {
+					log.Println(err.Error())
+					return
 				}
 			}
 		default:
@@ -100,41 +105,47 @@ func (game *GameManager) SendEvent(event PlayerEvent) {
 	game.events <- []PlayerEvent{event}
 }
 
-func (game *GameManager) registerPlayer(event *PlayerEvent) error {
-	log.Println("Registering new player: ", event.PlayerId)
+func (game *GameManager) registerPlayer(username string, onConnectionEnded func()) chan PlayerView {
 	if game.activePlayers == nil {
 		game.activePlayers = make(map[string]PlayerState)
 	}
-	_, exists := game.activePlayers[event.PlayerId]
+
+	playerState, exists := game.activePlayers[username]
 	if !exists {
-		game.activePlayers[event.PlayerId] = PlayerState{
-			userName:  event.PlayerId,
-			lastEvent: time.Now(),
+		playerChannel := make(chan PlayerView)
+		game.activePlayers[username] = PlayerState{
+			userName:       username,
+			lastEvent:      time.Now(),
+			playerChannel:  playerChannel,
+			removePlayerCb: onConnectionEnded,
 		}
+		return playerChannel
 	}
-	return nil
+
+	return playerState.playerChannel
 }
 
 func (game *GameManager) unregisterPlayer(username string) error {
 	if game.activePlayers == nil || len(game.activePlayers) == 0 {
-		return errors.New("Failed to unregister player")
+		return errors.New("failed to unregister player")
 	}
-	_, exists := game.activePlayers[username]
+	playerState, exists := game.activePlayers[username]
 	if exists == false {
 		log.Println("Warning: Failed to unregister player ", username)
 		return nil
 	}
+	playerState.removePlayerCb()
 	delete(game.activePlayers, username)
 	return nil
 }
 
-const TIME_OUT_TIME = time.Second * 30
+const TimeOutTime = time.Second * 30
 
 func (game *GameManager) timeOutActivePlayers() {
 	currentTime := time.Now()
 	for _, player := range game.activePlayers {
 		currTime := currentTime.Sub(player.lastEvent)
-		if currTime > TIME_OUT_TIME {
+		if currTime > TimeOutTime {
 			log.Println("Removing player ", player.userName)
 			err := game.unregisterPlayer(player.userName)
 			if err != nil {
@@ -144,29 +155,6 @@ func (game *GameManager) timeOutActivePlayers() {
 	}
 }
 
-func (game *GameManager) processEvent(event *PlayerEvent) string {
-	username := event.PlayerId
-	player, exists := game.activePlayers[username]
-	if !exists {
-		err := game.registerPlayer(event)
-		if err != nil {
-			return err.Error()
-		}
-	} else {
-		player.lastEvent = time.Now()
-		game.activePlayers[username] = player
-	}
-	var buffer string
-	switch event.GameEvent.EventId {
-	case E_SPAWN:
-		buffer = "spawn"
-	case E_MOVE:
-		buffer = "move"
-	case E_DESPAWN:
-		buffer = "despawn"
-	default:
-		buffer = "unknown"
-	}
-
-	return buffer
+func (game *GameManager) processEvent(event *PlayerEvent) error {
+	return nil
 }
