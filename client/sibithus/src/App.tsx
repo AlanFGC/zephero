@@ -1,10 +1,11 @@
 import './App.css';
+import { Button } from './components/ui/button';
 
-function App() {
+const App = () => {
 	return (
-		<>
-			<h1> Hello Sir </h1>
-		</>
+		<div className="flex min-h-svh flex-col items-center justify-center">
+			<Button>Welcome to sibithus!</Button>
+		</div>
 	);
 }
 
