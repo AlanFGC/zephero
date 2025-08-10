@@ -1,10 +1,15 @@
 import './App.css';
-import { Button } from './components/ui/button';
+import { AuthCard } from './components/auth-card';
+import { useAuth } from './contexts/auth-context';
 
 const App = () => {
+	const authClient = useAuth();
+	const session = authClient.useSession();
+	
 	return (
 		<div className="flex min-h-svh flex-col items-center justify-center">
-			<Button>Welcome to sibithus!</Button>
+			{!session.data?.session &&
+				<AuthCard />}
 		</div>
 	);
 }
